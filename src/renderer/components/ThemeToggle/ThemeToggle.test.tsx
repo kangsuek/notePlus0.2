@@ -21,15 +21,15 @@ describe('ThemeToggle', () => {
   it('should toggle theme when clicked', () => {
     render(<ThemeToggle />);
     const button = screen.getByTestId('theme-toggle');
-    
+
     // 초기 상태: light mode
     expect(button.textContent).toBe('🌙');
-    
+
     // 클릭: dark mode로 전환
     fireEvent.click(button);
     expect(button.textContent).toBe('☀️');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
-    
+
     // 다시 클릭: light mode로 전환
     fireEvent.click(button);
     expect(button.textContent).toBe('🌙');

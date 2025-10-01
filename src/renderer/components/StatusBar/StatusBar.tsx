@@ -1,5 +1,4 @@
 import React from 'react';
-import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import './StatusBar.css';
 
 interface CursorPosition {
@@ -24,7 +23,7 @@ const StatusBar: React.FC<StatusBarProps> = ({
         <span>줄 {cursorPosition.line}, 칸 {cursorPosition.column}</span>
       </div>
       <div className="status-center">
-        <ThemeToggle />
+        {/* 가운데 영역 (필요시 추가) */}
       </div>
       <div className="status-right">
         <span className="status-modified">

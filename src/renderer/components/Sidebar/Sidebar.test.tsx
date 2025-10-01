@@ -34,14 +34,14 @@ describe('Sidebar', () => {
     render(<Sidebar />);
     const sidebar = screen.getByTestId('sidebar');
     const toggleButton = screen.getByTitle('접기/펼치기');
-    
+
     // 초기 상태 확인
     expect(sidebar).not.toHaveClass('collapsed');
-    
+
     // 토글 클릭
     fireEvent.click(toggleButton);
     expect(sidebar).toHaveClass('collapsed');
-    
+
     // 다시 토글
     fireEvent.click(toggleButton);
     expect(sidebar).not.toHaveClass('collapsed');
