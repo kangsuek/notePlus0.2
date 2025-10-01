@@ -12,10 +12,11 @@ describe('ThemeToggle', () => {
     expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
   });
 
-  it('should display moon icon in light mode', () => {
+  it('should display moon icon and text in light mode', () => {
     render(<ThemeToggle />);
     const button = screen.getByTestId('theme-toggle');
-    expect(button.textContent).toBe('🌙');
+    expect(button.textContent).toContain('🌙');
+    expect(button.textContent).toContain('라이트 모드');
   });
 
   it('should toggle theme when clicked', () => {
@@ -23,16 +24,19 @@ describe('ThemeToggle', () => {
     const button = screen.getByTestId('theme-toggle');
 
     // 초기 상태: light mode
-    expect(button.textContent).toBe('🌙');
+    expect(button.textContent).toContain('🌙');
+    expect(button.textContent).toContain('라이트 모드');
 
     // 클릭: dark mode로 전환
     fireEvent.click(button);
-    expect(button.textContent).toBe('☀️');
+    expect(button.textContent).toContain('☀️');
+    expect(button.textContent).toContain('다크 모드');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
 
     // 다시 클릭: light mode로 전환
     fireEvent.click(button);
-    expect(button.textContent).toBe('🌙');
+    expect(button.textContent).toContain('🌙');
+    expect(button.textContent).toContain('라이트 모드');
     expect(document.documentElement.getAttribute('data-theme')).toBeNull();
   });
 

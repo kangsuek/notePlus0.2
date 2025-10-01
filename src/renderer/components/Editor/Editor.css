@@ -6,6 +6,23 @@
   flex-direction: column;
 }
 
+.editor-header {
+  height: 48px;
+  padding: 0 16px;
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editor-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
 .editor-container {
   flex: 1;
   display: flex;
