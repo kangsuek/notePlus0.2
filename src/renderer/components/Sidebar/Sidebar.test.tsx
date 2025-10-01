@@ -92,6 +92,52 @@ describe('Sidebar', () => {
     });
   });
 
+  it('should reject invalid filename with illegal characters', () => {
+    const handleFileNameChange = jest.fn();
+    render(<Sidebar currentFileName="test.md" onFileNameChange={handleFileNameChange} />);
+
+    const filename = screen.getByText('test.md');
+    fireEvent.click(filename);
+
+    const input = screen.getByDisplayValue('test.md');
+    fireEvent.change(input, { target: { value: 'file/name.md' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    // 잘못된 파일명이므로 onChange가 호출되지 않아야 함
+    expect(handleFileNameChange).not.toHaveBeenCalled();
+    // 오류 메시지가 표시되어야 함
+    expect(screen.getByText(/사용할 수 없는 문자/)).toBeInTheDocument();
+  });
+
+  it('should reject empty filename', () => {
+    const handleFileNameChange = jest.fn();
+    render(<Sidebar currentFileName="test.md" onFileNameChange={handleFileNameChange} />);
+
+    const filename = screen.getByText('test.md');
+    fireEvent.click(filename);
+
+    const input = screen.getByDisplayValue('test.md');
+    fireEvent.change(input, { target: { value: '   ' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(handleFileNameChange).not.toHaveBeenCalled();
+    expect(screen.getByText(/파일명을 입력해주세요/)).toBeInTheDocument();
+  });
+
+  it('should accept valid filename changes', () => {
+    const handleFileNameChange = jest.fn();
+    render(<Sidebar currentFileName="test.md" onFileNameChange={handleFileNameChange} />);
+
+    const filename = screen.getByText('test.md');
+    fireEvent.click(filename);
+
+    const input = screen.getByDisplayValue('test.md');
+    fireEvent.change(input, { target: { value: 'valid-name.md' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(handleFileNameChange).toHaveBeenCalledWith('valid-name.md');
+  });
+
   it('should have toggle button', () => {
     render(<Sidebar />);
     const toggleButton = screen.getByTitle('접기/펼치기');

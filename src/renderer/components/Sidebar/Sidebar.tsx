@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { getFileNameError } from '@renderer/utils/fileNameValidator';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -15,6 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isEditingFileName, setIsEditingFileName] = useState(false);
   const [editedFileName, setEditedFileName] = useState(currentFileName);
+  const [fileNameError, setFileNameError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 파일명이 외부에서 변경되면 동기화
@@ -47,14 +49,27 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleFileNameSave = () => {
-    if (editedFileName.trim() && editedFileName !== currentFileName) {
-      onFileNameChange?.(editedFileName.trim());
+    const trimmed = editedFileName.trim();
+
+    // 파일명 검증
+    const error = getFileNameError(trimmed);
+    if (error) {
+      setFileNameError(error);
+      return; // 편집 모드 유지
     }
+
+    // 유효한 파일명이고 변경되었으면 저장
+    if (trimmed && trimmed !== currentFileName) {
+      onFileNameChange?.(trimmed);
+    }
+
+    setFileNameError(null);
     setIsEditingFileName(false);
   };
 
   const handleFileNameCancel = () => {
     setEditedFileName(currentFileName);
+    setFileNameError(null);
     setIsEditingFileName(false);
   };
 
@@ -77,25 +92,36 @@ const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* 파일명 섹션 */}
       <div className="sidebar-filename-section">
-        {isEditingFileName ? (
-          <input
-            ref={inputRef}
-            type="text"
-            className="filename-input"
-            value={editedFileName}
-            onChange={(e) => setEditedFileName(e.target.value)}
-            onKeyDown={handleFileNameKeyDown}
-            onBlur={handleFileNameBlur}
-          />
-        ) : (
-          <div
-            className="filename-display"
-            onClick={handleFileNameClick}
-            title="클릭하여 파일명 변경"
-          >
-            {currentFileName}{isDirty ? ' *' : ''}
-          </div>
-        )}
+        <div className="filename-wrapper">
+          {isEditingFileName ? (
+            <>
+              <input
+                ref={inputRef}
+                type="text"
+                className={`filename-input ${fileNameError ? 'filename-input-error' : ''}`}
+                value={editedFileName}
+                onChange={(e) => setEditedFileName(e.target.value)}
+                onKeyDown={handleFileNameKeyDown}
+                onBlur={handleFileNameBlur}
+                aria-invalid={!!fileNameError}
+                aria-describedby={fileNameError ? 'filename-error' : undefined}
+              />
+              {fileNameError && (
+                <div className="filename-error" id="filename-error" role="alert">
+                  {fileNameError}
+                </div>
+              )}
+            </>
+          ) : (
+            <div
+              className="filename-display"
+              onClick={handleFileNameClick}
+              title="클릭하여 파일명 변경"
+            >
+              {currentFileName}{isDirty ? ' *' : ''}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 최근 문서 헤더 */}
