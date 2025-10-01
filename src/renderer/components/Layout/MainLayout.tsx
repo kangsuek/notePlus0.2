@@ -11,13 +11,15 @@ const MainLayout: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [currentFileName, setCurrentFileName] = useState('untitled.md');
   const [showStatus, setShowStatus] = useState(false);
+  const [markdownText, setMarkdownText] = useState(''); // 마크다운 텍스트 상태
   const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleCursorChange = (position: { line: number; column: number }) => {
     setCursorPosition(position);
   };
 
-  const handleTextChange = (_text: string) => {
+  const handleTextChange = (text: string) => {
+    setMarkdownText(text); // 텍스트 상태 업데이트
     setIsDirty(true);
     showStatusTemporarily();
   };
@@ -65,7 +67,7 @@ const MainLayout: React.FC = () => {
           onCursorChange={handleCursorChange}
           onChange={handleTextChange}
         />
-        <Preview />
+        <Preview markdown={markdownText} />
       </div>
       <StatusBar
         cursorPosition={cursorPosition}
