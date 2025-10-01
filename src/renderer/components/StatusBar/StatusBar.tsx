@@ -10,12 +10,14 @@ interface StatusBarProps {
   cursorPosition?: CursorPosition;
   encoding?: string;
   isDirty?: boolean;
+  showStatus?: boolean;
 }
 
 const StatusBar: React.FC<StatusBarProps> = ({
   cursorPosition = { line: 1, column: 1 },
   encoding = 'UTF-8',
   isDirty = false,
+  showStatus = false,
 }) => {
   return (
     <div className="status-bar" data-testid="status-bar">
@@ -26,9 +28,11 @@ const StatusBar: React.FC<StatusBarProps> = ({
         {/* 가운데 영역 (필요시 추가) */}
       </div>
       <div className="status-right">
-        <span className="status-modified">
-          {isDirty ? '수정됨' : '저장됨'}
-        </span>
+        {showStatus && (
+          <span className="status-modified">
+            {isDirty ? '수정됨' : '저장됨'}
+          </span>
+        )}
         <span className="status-encoding">{encoding}</span>
       </div>
     </div>

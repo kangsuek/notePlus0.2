@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TitleBar from '../TitleBar/TitleBar';
 import Sidebar from '../Sidebar/Sidebar';
 import Editor from '../Editor/Editor';
@@ -7,15 +7,71 @@ import StatusBar from '../StatusBar/StatusBar';
 import './MainLayout.css';
 
 const MainLayout: React.FC = () => {
+  const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
+  const [isDirty, setIsDirty] = useState(false);
+  const [currentFileName, setCurrentFileName] = useState('untitled.md');
+  const [showStatus, setShowStatus] = useState(false);
+  const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleCursorChange = (position: { line: number; column: number }) => {
+    setCursorPosition(position);
+  };
+
+  const handleTextChange = (_text: string) => {
+    setIsDirty(true);
+    showStatusTemporarily();
+  };
+
+  const handleFileNameChange = (newFileName: string) => {
+    setCurrentFileName(newFileName);
+    setIsDirty(true);
+    showStatusTemporarily();
+  };
+
+  const showStatusTemporarily = () => {
+    // 상태 표시
+    setShowStatus(true);
+
+    // 이전 타이머 취소
+    if (statusTimerRef.current) {
+      clearTimeout(statusTimerRef.current);
+    }
+
+    // 3초 후 상태 숨기기
+    statusTimerRef.current = setTimeout(() => {
+      setShowStatus(false);
+    }, 3000);
+  };
+
+  // 클린업
+  useEffect(() => {
+    return () => {
+      if (statusTimerRef.current) {
+        clearTimeout(statusTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="main-layout" data-testid="main-layout">
       <TitleBar />
       <div className="main-content">
-        <Sidebar />
-        <Editor />
+        <Sidebar
+          currentFileName={currentFileName}
+          onFileNameChange={handleFileNameChange}
+          isDirty={isDirty}
+        />
+        <Editor
+          onCursorChange={handleCursorChange}
+          onChange={handleTextChange}
+        />
         <Preview />
       </div>
-      <StatusBar />
+      <StatusBar
+        cursorPosition={cursorPosition}
+        isDirty={isDirty}
+        showStatus={showStatus}
+      />
     </div>
   );
 };

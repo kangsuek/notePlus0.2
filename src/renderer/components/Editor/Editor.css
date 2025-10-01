@@ -29,8 +29,23 @@
   overflow: hidden;
 }
 
+.line-numbers-wrapper {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: var(--background-secondary); /* wrapper에 배경색 적용 */
+  border-right: 1px solid var(--border-color);
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.line-numbers-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
 .line-numbers {
-  background-color: var(--background-secondary);
   color: var(--text-secondary);
   padding: 16px 12px;
   text-align: right;
@@ -38,12 +53,21 @@
   font-size: 14px;
   line-height: 1.6;
   user-select: none;
-  border-right: 1px solid var(--border-color);
   min-width: 50px;
 }
 
 .line-number {
   height: 22.4px; /* 14px * 1.6 line-height */
+  padding: 0 8px;
+  margin: 0 -8px;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+.line-number-active {
+  background-color: var(--hover-background);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-radius: 4px;
 }
 
 .editor-textarea {

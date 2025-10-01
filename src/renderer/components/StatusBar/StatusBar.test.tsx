@@ -27,13 +27,19 @@ describe('StatusBar', () => {
     expect(screen.getByText('UTF-8')).toBeInTheDocument();
   });
 
-  it('should display save status', () => {
-    render(<StatusBar isDirty={false} />);
+  it('should not display status by default', () => {
+    render(<StatusBar />);
+    expect(screen.queryByText('저장됨')).not.toBeInTheDocument();
+    expect(screen.queryByText('수정됨')).not.toBeInTheDocument();
+  });
+
+  it('should display save status when showStatus is true', () => {
+    render(<StatusBar isDirty={false} showStatus={true} />);
     expect(screen.getByText('저장됨')).toBeInTheDocument();
   });
 
-  it('should display modified status', () => {
-    render(<StatusBar isDirty={true} />);
+  it('should display modified status when showStatus is true', () => {
+    render(<StatusBar isDirty={true} showStatus={true} />);
     expect(screen.getByText('수정됨')).toBeInTheDocument();
   });
 
