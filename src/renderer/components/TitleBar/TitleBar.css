@@ -1,0 +1,41 @@
+.title-bar {
+  height: 52px;
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  /* macOS traffic light buttons를 위한 여백 */
+  padding-left: 80px;
+}
+
+.title-bar-drag-region {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  /* Electron의 -webkit-app-region을 통해 드래그 가능 영역으로 설정 */
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.title-bar-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+}
+
+/* 다크 모드에서 타이틀바 스타일 */
+[data-theme='dark'] .title-bar {
+  background-color: var(--background-secondary);
+  border-bottom-color: var(--border-color);
+}
+
+/* 버튼이나 인터랙티브 요소는 드래그 비활성화 */
+.title-bar button {
+  -webkit-app-region: no-drag;
+}
+

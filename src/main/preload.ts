@@ -8,7 +8,7 @@ export interface ElectronAPI {
   send: (channel: string, ...args: unknown[]) => void;
   on: (channel: string, callback: (...args: unknown[]) => void) => void;
   invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-  
+
   // 플랫폼 정보
   platform: NodeJS.Platform;
 }
@@ -29,7 +29,7 @@ const electronAPI: ElectronAPI = {
       'window:maximize',
       'window:close',
     ];
-    
+
     if (validChannels.includes(channel)) {
       ipcRenderer.send(channel, ...args);
     }
@@ -43,7 +43,7 @@ const electronAPI: ElectronAPI = {
       'menu:action',
       'theme:changed',
     ];
-    
+
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, (_event, ...args) => callback(...args));
     }
@@ -58,11 +58,11 @@ const electronAPI: ElectronAPI = {
       'file:write',
       'app:getPath',
     ];
-    
+
     if (validChannels.includes(channel)) {
       return await ipcRenderer.invoke(channel, ...args);
     }
-    
+
     throw new Error(`Invalid channel: ${channel}`);
   },
 

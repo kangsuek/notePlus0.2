@@ -8,9 +8,9 @@ describe('App', () => {
     const rootElement = document.createElement('div');
     rootElement.id = 'root';
     document.body.appendChild(rootElement);
-    
+
     expect(document.getElementById('root')).toBeInTheDocument();
-    
+
     document.body.removeChild(rootElement);
   });
 });
