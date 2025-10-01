@@ -21,12 +21,11 @@ coverage/
 .env.*.local
 
 # IDE
-.vscode/
+# .vscode/ - 프로젝트 설정은 커밋
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
 
 # Electron
 release/

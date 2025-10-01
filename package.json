@@ -7,8 +7,9 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "dev": "NODE_ENV=development vite",
+    "build": "tsc && vite build && electron-builder",
+    "build:dir": "tsc && vite build && electron-builder --dir",
     "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -16,7 +17,9 @@
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\""
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\"",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist build node_modules/.vite"
   },
   "dependencies": {
     "react": "^18.2.0",
