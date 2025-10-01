@@ -1,0 +1,119 @@
+# notePlus - Product Requirements Document (PRD)
+
+## 1. 프로젝트 개요
+
+**제품명**: notePlus  
+**설명**: 마크다운 메모 + 계산기 macOS 앱
+
+**핵심 가치**: macOS 사용자가 마크다운 문법으로 메모를 작성하면서 동시에 수식 계산을 할 수 있는 네이티브 앱
+
+### 핵심 기능
+1. **마크다운 편집**: 실시간 프리뷰, 모든 마크다운 문법 지원
+2. **수식 계산**: `=` 입력 시 즉시 계산 결과 표시 (mathjs 사용)
+3. **양방향 스크롤 동기화**: Editor ↔ Preview 간 스크롤 동기화 (무한 루프 방지)
+4. **파일 관리**: 로컬 파일 저장/열기, 최근 문서 관리, 드래그 앤 드롭 지원
+5. **macOS 네이티브**: Dark Mode, 키보드 단축키, 메뉴바 시스템
+6. **다중 파일 포맷**: .md, .txt, .pdf 지원
+
+**타겟 사용자**: 메모와 계산을 동시에 필요로 하는 macOS 사용자 (개발자, 연구자, 학생)
+
+**개발 방법론**: TDD (Test-Driven Development) 기반 애자일 개발
+
+---
+
+## 2. 기술 스택
+
+**플랫폼**: macOS 11.0+
+
+**핵심 기술**:
+- Electron + React + TypeScript
+- Vite (빌드 도구)
+- Jest + React Testing Library (테스트)
+- electron-builder (패키징)
+
+**주요 라이브러리**:
+- `marked`: 마크다운 파싱
+- `mathjs`: 안전한 수식 계산
+- `electron-store`: 로컬 스토리지
+- Styled Components: UI 스타일링
+
+**보안 원칙**:
+- Electron 보안 모델 준수 (nodeIntegration: false, contextIsolation: true)
+- CSP (Content Security Policy) 적용
+- mathjs를 통한 안전한 수식 계산 (eval 금지)
+
+---
+
+## 3. 개발 가이드
+
+**TDD 원칙**:
+- 모든 기능 개발 시 테스트부터 작성
+- 테스트 실패 → 구현 → 테스트 통과 → 리팩토링 순서 준수
+
+**코드 품질**:
+- 단일 책임 원칙 (함수는 하나의 역할만)
+- Prettier + ESLint 코드 스타일 유지
+- 읽기 쉬운 코드로 의도 표현 (최소한의 주석)
+
+**테스트 정책**:
+- 유닛 테스트 + 통합 테스트 필수
+- 모든 테스트 통과 후 배포
+- 목표 테스트 커버리지: 70% 이상
+
+---
+
+## 4. UI/UX 설계
+
+**디자인 원칙**:
+- macOS Human Interface Guidelines 준수
+- Dark Mode / Light Mode 지원
+- 반응형 레이아웃
+
+**화면 구성**:
+- **Sidebar**: 최근 문서 목록 (접기/펼치기 가능)
+- **Editor**: 마크다운 편집기 (라인 넘버 표시)
+- **Preview**: 실시간 HTML 프리뷰
+- **StatusBar**: 커서 위치, 파일 인코딩, 저장 상태
+- **MenuBar**: File, Edit, View, Window, Help
+
+**주요 인터랙션**:
+- 실시간 마크다운 프리뷰
+- `=` 입력 시 즉시 계산 결과 표시
+- Editor ↔ Preview 양방향 스크롤 동기화
+- 드래그 앤 드롭 파일 열기
+- ResizablePane으로 영역 크기 조절
+
+---
+
+## 5. 성능 목표
+
+- 앱 시작 시간: 3초 이내
+- 메모리 사용량: 100MB 이하
+- 테스트 커버리지: 70% 이상
+
+---
+
+## 6. 개발 로드맵
+
+### Phase 1 (MVP) - 완료
+- 마크다운 편집 + 실시간 프리뷰
+- 수식 계산 기능
+- 기본 파일 관리
+
+### Phase 2 (macOS 네이티브) - 진행 중
+- 키보드 단축키
+- 스크롤 동기화
+- 파일 시스템 연동
+- 메뉴바 시스템
+
+### Phase 3 (고급 기능)
+- 검색 기능
+- 내보내기 (PDF, HTML)
+- 구문 강조
+
+### Phase 4 (확장)
+- 클라우드 동기화
+- 플러그인 시스템
+
+---
+
