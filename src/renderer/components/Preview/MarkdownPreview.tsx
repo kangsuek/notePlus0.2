@@ -43,10 +43,12 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
           'blockquote', 'pre', 'code',
           'table', 'thead', 'tbody', 'tr', 'th', 'td',
           'div', 'span',
+          'input', // task list를 위한 checkbox
         ],
         ALLOWED_ATTR: [
           'href', 'src', 'alt', 'title', 'class', 'id',
           'target', 'rel', 'align', 'valign',
+          'type', 'checked', 'disabled', // checkbox 속성
         ],
       });
 

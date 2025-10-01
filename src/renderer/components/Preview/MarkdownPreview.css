@@ -86,6 +86,17 @@
   margin-bottom: 4px;
 }
 
+/* Task List (GFM) */
+.markdown-preview input[type="checkbox"] {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.markdown-preview li.task-list-item {
+  list-style-type: none;
+  margin-left: -24px;
+}
+
 /* 코드 스타일 */
 .markdown-preview code {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
