@@ -1,13 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getFileNameError } from '@renderer/utils/fileNameValidator';
 import { FILE_CONFIG } from '@renderer/constants';
+import type { SidebarProps } from '@renderer/types';
 import './Sidebar.css';
-
-interface SidebarProps {
-  currentFileName?: string;
-  onFileNameChange?: (newFileName: string) => void;
-  isDirty?: boolean;
-}
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   currentFileName = FILE_CONFIG.DEFAULT_FILENAME,

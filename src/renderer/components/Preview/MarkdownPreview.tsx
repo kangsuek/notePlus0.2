@@ -2,11 +2,8 @@ import React, { useMemo } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { ERROR_MESSAGES } from '@renderer/constants';
+import type { MarkdownPreviewProps } from '@renderer/types';
 import './MarkdownPreview.css';
-
-interface MarkdownPreviewProps {
-  markdown: string;
-}
 
 /**
  * 마크다운을 HTML로 렌더링하는 컴포넌트

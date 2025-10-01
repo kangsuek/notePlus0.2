@@ -1,14 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import LineNumbers from './LineNumbers';
 import { EDITOR_CONFIG, MARKDOWN_SYNTAX } from '@renderer/constants';
+import type { EditorProps } from '@renderer/types';
 import './Editor.css';
-
-interface EditorProps {
-  value?: string;
-  onChange?: (value: string) => void;
-  onCursorChange?: (position: { line: number; column: number }) => void;
-  debounceMs?: number;
-}
 
 const Editor: React.FC<EditorProps> = ({
   value: controlledValue,

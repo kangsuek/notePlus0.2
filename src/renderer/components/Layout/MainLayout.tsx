@@ -5,10 +5,11 @@ import Editor from '../Editor/Editor';
 import Preview from '../Preview/Preview';
 import StatusBar from '../StatusBar/StatusBar';
 import { UI_CONFIG, FILE_CONFIG, EDITOR_CONFIG } from '@renderer/constants';
+import type { CursorPosition } from '@renderer/types';
 import './MainLayout.css';
 
 const MainLayout: React.FC = () => {
-  const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
+  const [cursorPosition, setCursorPosition] = useState<CursorPosition>({ line: 1, column: 1 });
   const [isDirty, setIsDirty] = useState(false);
   const [currentFileName, setCurrentFileName] = useState<string>(FILE_CONFIG.DEFAULT_FILENAME);
   const [showStatus, setShowStatus] = useState(false);
@@ -31,7 +32,7 @@ const MainLayout: React.FC = () => {
     }, UI_CONFIG.STATUS_DISPLAY_DURATION);
   }, []);
 
-  const handleCursorChange = useCallback((position: { line: number; column: number }) => {
+  const handleCursorChange = useCallback((position: CursorPosition) => {
     setCursorPosition(position);
   }, []);
 

@@ -1,9 +1,5 @@
 import React from 'react';
-
-interface LineNumbersProps {
-  lineCount: number;
-  currentLine?: number;
-}
+import type { LineNumbersProps } from '@renderer/types';
 
 const LineNumbers: React.FC<LineNumbersProps> = ({ lineCount, currentLine }) => {
   const lineNumbers = Array.from({ length: Math.max(lineCount, 1) }, (_, i) => i + 1);

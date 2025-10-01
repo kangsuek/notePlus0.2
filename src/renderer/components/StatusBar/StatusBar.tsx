@@ -1,17 +1,6 @@
 import React from 'react';
+import type { StatusBarProps } from '@renderer/types';
 import './StatusBar.css';
-
-interface CursorPosition {
-  line: number;
-  column: number;
-}
-
-interface StatusBarProps {
-  cursorPosition?: CursorPosition;
-  encoding?: string;
-  isDirty?: boolean;
-  showStatus?: boolean;
-}
 
 const StatusBar: React.FC<StatusBarProps> = ({
   cursorPosition = { line: 1, column: 1 },

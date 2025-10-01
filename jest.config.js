@@ -32,6 +32,10 @@ module.exports = {
     '!src/**/*.test.{ts,tsx}',
     '!src/**/*.spec.{ts,tsx}',
     '!src/__tests__/**',
+    '!src/main/**', // 메인 프로세스 제외 (Electron)
+    '!src/renderer/main.tsx', // 엔트리 파일 제외
+    '!src/renderer/types.ts', // 타입 정의 제외
+    '!src/renderer/constants.ts', // 상수만 있는 파일 제외
   ],
   coverageThreshold: {
     global: {
