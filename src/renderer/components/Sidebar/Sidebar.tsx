@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { getFileNameError } from '@renderer/utils/fileNameValidator';
+import { FILE_CONFIG } from '@renderer/constants';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -8,8 +9,8 @@ interface SidebarProps {
   isDirty?: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-  currentFileName = 'untitled.md',
+const Sidebar: React.FC<SidebarProps> = ({ 
+  currentFileName = FILE_CONFIG.DEFAULT_FILENAME,
   onFileNameChange,
   isDirty = false
 }) => {
@@ -131,16 +132,18 @@ const Sidebar: React.FC<SidebarProps> = ({
             className="toggle-button"
             onClick={handleToggle}
             title="접기/펼치기"
+            aria-label={isCollapsed ? '사이드바 펼치기' : '사이드바 접기'}
+            aria-expanded={!isCollapsed}
           >
             {isCollapsed ? '▶' : '▼'}
           </button>
           <h3>최근 문서 (0)</h3>
         </div>
         <div className="sidebar-actions">
-          <button onClick={handleRefresh} title="새로고침">
+          <button onClick={handleRefresh} title="새로고침" aria-label="최근 문서 새로고침">
             🔄
           </button>
-          <button onClick={handleDelete} title="삭제">
+          <button onClick={handleDelete} title="삭제" aria-label="선택된 문서 삭제">
             🗑️
           </button>
         </div>

@@ -1,36 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import TitleBar from '../TitleBar/TitleBar';
 import Sidebar from '../Sidebar/Sidebar';
 import Editor from '../Editor/Editor';
 import Preview from '../Preview/Preview';
 import StatusBar from '../StatusBar/StatusBar';
+import { UI_CONFIG, FILE_CONFIG, EDITOR_CONFIG } from '@renderer/constants';
 import './MainLayout.css';
 
 const MainLayout: React.FC = () => {
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
   const [isDirty, setIsDirty] = useState(false);
-  const [currentFileName, setCurrentFileName] = useState('untitled.md');
+  const [currentFileName, setCurrentFileName] = useState<string>(FILE_CONFIG.DEFAULT_FILENAME);
   const [showStatus, setShowStatus] = useState(false);
   const [markdownText, setMarkdownText] = useState(''); // 마크다운 텍스트 상태
   const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleCursorChange = (position: { line: number; column: number }) => {
-    setCursorPosition(position);
-  };
-
-  const handleTextChange = (text: string) => {
-    setMarkdownText(text); // 텍스트 상태 업데이트
-    setIsDirty(true);
-    showStatusTemporarily();
-  };
-
-  const handleFileNameChange = (newFileName: string) => {
-    setCurrentFileName(newFileName);
-    setIsDirty(true);
-    showStatusTemporarily();
-  };
-
-  const showStatusTemporarily = () => {
+  // 상태 표시 함수 (useCallback으로 메모이제이션)
+  const showStatusTemporarily = useCallback(() => {
     // 상태 표시
     setShowStatus(true);
 
@@ -39,11 +25,27 @@ const MainLayout: React.FC = () => {
       clearTimeout(statusTimerRef.current);
     }
 
-    // 3초 후 상태 숨기기
+    // STATUS_DISPLAY_DURATION 후 상태 숨기기
     statusTimerRef.current = setTimeout(() => {
       setShowStatus(false);
-    }, 3000);
-  };
+    }, UI_CONFIG.STATUS_DISPLAY_DURATION);
+  }, []);
+
+  const handleCursorChange = useCallback((position: { line: number; column: number }) => {
+    setCursorPosition(position);
+  }, []);
+
+  const handleTextChange = useCallback((text: string) => {
+    setMarkdownText(text); // 텍스트 상태 업데이트
+    setIsDirty(true);
+    showStatusTemporarily();
+  }, [showStatusTemporarily]);
+
+  const handleFileNameChange = useCallback((newFileName: string) => {
+    setCurrentFileName(newFileName);
+    setIsDirty(true);
+    showStatusTemporarily();
+  }, [showStatusTemporarily]);
 
   // 클린업
   useEffect(() => {
@@ -66,6 +68,7 @@ const MainLayout: React.FC = () => {
         <Editor
           onCursorChange={handleCursorChange}
           onChange={handleTextChange}
+          debounceMs={EDITOR_CONFIG.DEBOUNCE_MS}
         />
         <Preview markdown={markdownText} />
       </div>

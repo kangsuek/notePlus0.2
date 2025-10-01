@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import LineNumbers from './LineNumbers';
+import { EDITOR_CONFIG, MARKDOWN_SYNTAX } from '@renderer/constants';
 import './Editor.css';
 
 interface EditorProps {
@@ -21,8 +22,8 @@ const Editor: React.FC<EditorProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
 
-  // 라인 수 계산
-  const lineCount = text.split('\n').length;
+  // 라인 수 계산 (useMemo로 메모이제이션)
+  const lineCount = useMemo(() => text.split('\n').length, [text]);
 
   // 커서 위치 계산
   const updateCursorPosition = useCallback(() => {
@@ -78,7 +79,7 @@ const Editor: React.FC<EditorProps> = ({
     updateCursorPosition();
   }, [updateCursorPosition]);
 
-  // Tab 키 처리: 스페이스 2칸 삽입
+  // Tab 키 처리: 스페이스 삽입
   const handleTab = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     e.preventDefault();
     const textarea = textareaRef.current;
@@ -86,7 +87,7 @@ const Editor: React.FC<EditorProps> = ({
 
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const spaces = '  '; // 2 스페이스
+    const spaces = ' '.repeat(EDITOR_CONFIG.TAB_SIZE);
 
     const newValue = text.substring(0, start) + spaces + text.substring(end);
     setText(newValue);
@@ -151,14 +152,14 @@ const Editor: React.FC<EditorProps> = ({
     // Cmd+B: Bold
     if (e.metaKey && e.key === 'b') {
       e.preventDefault();
-      const wrapper = '**';
+      const wrapper = MARKDOWN_SYNTAX.BOLD;
       newValue = text.substring(0, start) + wrapper + selectedText + wrapper + text.substring(end);
       newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
     }
     // Cmd+I: Italic
     else if (e.metaKey && e.key === 'i') {
       e.preventDefault();
-      const wrapper = '*';
+      const wrapper = MARKDOWN_SYNTAX.ITALIC;
       newValue = text.substring(0, start) + wrapper + selectedText + wrapper + text.substring(end);
       newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
     }
@@ -166,7 +167,7 @@ const Editor: React.FC<EditorProps> = ({
     else if (e.metaKey && e.key === 'k') {
       e.preventDefault();
       const linkText = selectedText || 'text';
-      const linkMarkdown = `[${linkText}](url)`;
+      const linkMarkdown = MARKDOWN_SYNTAX.LINK_TEMPLATE.replace('text', linkText);
       newValue = text.substring(0, start) + linkMarkdown + text.substring(end);
       newCursorPos = start + linkMarkdown.length;
     }
@@ -234,6 +235,10 @@ const Editor: React.FC<EditorProps> = ({
           onClick={handleCursorUpdate}
           onKeyUp={handleCursorUpdate}
           onKeyDown={handleKeyDown}
+          aria-label="마크다운 편집기"
+          aria-multiline="true"
+          role="textbox"
+          spellCheck="true"
         />
       </div>
     </div>

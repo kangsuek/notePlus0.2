@@ -39,5 +39,5 @@ const StatusBar: React.FC<StatusBarProps> = ({
   );
 };
 
-export default StatusBar;
+export default React.memo(StatusBar);
 

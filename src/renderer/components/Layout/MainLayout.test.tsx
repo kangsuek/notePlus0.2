@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@/__tests__/test-utils';
+import { render, screen, fireEvent, waitFor } from '@/__tests__/test-utils';
 import MainLayout from './MainLayout';
 
 describe('MainLayout', () => {
@@ -53,13 +53,16 @@ describe('MainLayout', () => {
     expect(screen.queryByText('수정됨')).not.toBeInTheDocument();
   });
 
-  it('should show "수정됨" status when text changes', () => {
+  it('should show "수정됨" status when text changes', async () => {
     render(<MainLayout />);
 
     const textarea = screen.getByPlaceholderText('마크다운으로 작성하세요...');
     fireEvent.change(textarea, { target: { value: 'Hello' } });
 
-    expect(screen.getByText('수정됨')).toBeInTheDocument();
+    // debounce 시간 대기
+    await waitFor(() => {
+      expect(screen.getByText('수정됨')).toBeInTheDocument();
+    }, { timeout: 1000 });
   });
 
   it('should show "수정됨" status when filename changes', () => {
@@ -77,13 +80,16 @@ describe('MainLayout', () => {
     expect(screen.getByText('수정됨')).toBeInTheDocument();
   });
 
-  it('should show asterisk in filename when modified', () => {
+  it('should show asterisk in filename when modified', async () => {
     render(<MainLayout />);
 
     const textarea = screen.getByPlaceholderText('마크다운으로 작성하세요...');
     fireEvent.change(textarea, { target: { value: 'Hello' } });
 
-    expect(screen.getByText('untitled.md *')).toBeInTheDocument();
+    // debounce 시간 대기
+    await waitFor(() => {
+      expect(screen.getByText('untitled.md *')).toBeInTheDocument();
+    }, { timeout: 1000 });
   });
 });
 

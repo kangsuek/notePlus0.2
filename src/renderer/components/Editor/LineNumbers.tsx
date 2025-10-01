@@ -23,5 +23,5 @@ const LineNumbers: React.FC<LineNumbersProps> = ({ lineCount, currentLine }) => 
   );
 };
 
-export default LineNumbers;
+export default React.memo(LineNumbers);
 

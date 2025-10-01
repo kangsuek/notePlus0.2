@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { ERROR_MESSAGES } from '@renderer/constants';
 import './MarkdownPreview.css';
 
 interface MarkdownPreviewProps {
@@ -54,8 +55,11 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
 
       return sanitizedHtml;
     } catch (error) {
-      console.error('Markdown parsing error:', error);
-      return '<p>마크다운을 렌더링하는 중 오류가 발생했습니다.</p>';
+      // 개발 환경에서만 에러 로깅
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Markdown parsing error:', error);
+      }
+      return `<p>${ERROR_MESSAGES.MARKDOWN_PARSE_ERROR}</p>`;
     }
   }, [markdown]);
 
