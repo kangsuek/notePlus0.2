@@ -92,5 +92,143 @@ describe('Editor', () => {
     // line numbers wrapper도 같은 위치로 스크롤되어야 함
     expect(lineNumbersWrapper.scrollTop).toBe(100);
   });
+
+  // 3.5 에디터 UX 개선 테스트
+  describe('Tab key handling', () => {
+    it('should insert spaces when Tab key is pressed', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      // Tab 키 입력
+      fireEvent.keyDown(textarea, { key: 'Tab', code: 'Tab' });
+
+      // 2 스페이스가 삽입되어야 함
+      expect(textarea.value).toBe('  ');
+    });
+
+    it('should not insert Tab character', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      fireEvent.keyDown(textarea, { key: 'Tab', code: 'Tab' });
+
+      // 실제 탭 문자(\t)가 아닌 스페이스여야 함
+      expect(textarea.value).not.toContain('\t');
+    });
+
+    it('should insert Tab at cursor position', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      // 텍스트 입력
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      
+      // 커서를 중간에 위치
+      textarea.setSelectionRange(2, 2); // "He|llo"
+      
+      // Tab 키 입력
+      fireEvent.keyDown(textarea, { key: 'Tab', code: 'Tab' });
+
+      expect(textarea.value).toBe('He  llo');
+    });
+  });
+
+  describe('Auto indentation', () => {
+    it('should maintain indentation on Enter key', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      // 들여쓰기가 있는 텍스트 입력
+      fireEvent.change(textarea, { target: { value: '  Hello' } });
+      
+      // 커서를 끝으로 이동
+      textarea.setSelectionRange(7, 7);
+      
+      // Enter 키 입력
+      fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
+
+      // 새 줄도 같은 들여쓰기를 가져야 함
+      expect(textarea.value).toBe('  Hello\n  ');
+    });
+
+    it('should handle multiple levels of indentation', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: '    Nested' } });
+      textarea.setSelectionRange(10, 10);
+      
+      fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
+
+      expect(textarea.value).toBe('    Nested\n    ');
+    });
+
+    it('should not add extra indentation for line without indent', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: 'No indent' } });
+      textarea.setSelectionRange(9, 9);
+      
+      fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
+
+      // 들여쓰기가 없으면 preventDefault가 호출되지 않음
+      // 따라서 값은 변하지 않음 (브라우저 기본 동작으로 처리됨)
+      expect(textarea.value).toBe('No indent');
+    });
+  });
+
+  describe('Keyboard shortcuts', () => {
+    it('should wrap selected text with ** on Cmd+B', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: 'Hello World' } });
+      
+      // "World" 선택
+      textarea.setSelectionRange(6, 11);
+      
+      // Cmd+B
+      fireEvent.keyDown(textarea, { key: 'b', metaKey: true });
+
+      expect(textarea.value).toBe('Hello **World**');
+    });
+
+    it('should wrap selected text with * on Cmd+I', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: 'Hello World' } });
+      textarea.setSelectionRange(6, 11);
+      
+      fireEvent.keyDown(textarea, { key: 'i', metaKey: true });
+
+      expect(textarea.value).toBe('Hello *World*');
+    });
+
+    it('should insert link markdown on Cmd+K', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: 'Click here' } });
+      textarea.setSelectionRange(6, 10); // "here" 선택
+      
+      fireEvent.keyDown(textarea, { key: 'k', metaKey: true });
+
+      expect(textarea.value).toBe('Click [here](url)');
+    });
+
+    it('should insert bold markers at cursor when no selection', () => {
+      const { container } = render(<Editor />);
+      const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
+
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      textarea.setSelectionRange(5, 5); // 끝에 커서
+      
+      fireEvent.keyDown(textarea, { key: 'b', metaKey: true });
+
+      expect(textarea.value).toBe('Hello****');
+    });
+  });
 });
 

@@ -78,6 +78,127 @@ const Editor: React.FC<EditorProps> = ({
     updateCursorPosition();
   }, [updateCursorPosition]);
 
+  // Tab 키 처리: 스페이스 2칸 삽입
+  const handleTab = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const spaces = '  '; // 2 스페이스
+
+    const newValue = text.substring(0, start) + spaces + text.substring(end);
+    setText(newValue);
+
+    // 커서 위치 조정
+    setTimeout(() => {
+      textarea.selectionStart = textarea.selectionEnd = start + spaces.length;
+      updateCursorPosition();
+    }, 0);
+
+    // onChange 호출
+    if (onChange) {
+      onChange(newValue);
+    }
+  }, [text, onChange, updateCursorPosition]);
+
+  // Enter 키 처리: 자동 들여쓰기
+  const handleEnter = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const textBeforeEnter = text.substring(0, start);
+    const lines = textBeforeEnter.split('\n');
+    const currentLineText = lines[lines.length - 1] || '';
+
+    // 현재 줄의 들여쓰기 감지
+    const indentMatch = currentLineText.match(/^(\s+)/);
+    const indent = indentMatch?.[1] || '';
+
+    // 들여쓰기가 있는 경우에만 처리
+    if (indent && indent.length > 0) {
+      e.preventDefault();
+      const end = textarea.selectionEnd;
+      const newValue = text.substring(0, start) + '\n' + indent + text.substring(end);
+      setText(newValue);
+
+      // 커서 위치 조정
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + 1 + indent.length;
+        updateCursorPosition();
+      }, 0);
+
+      // onChange 호출
+      if (onChange) {
+        onChange(newValue);
+      }
+    }
+  }, [text, onChange, updateCursorPosition]);
+
+  // 단축키 처리: Cmd+B, Cmd+I, Cmd+K
+  const handleShortcut = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = text.substring(start, end);
+    let newValue = text;
+    let newCursorPos = start;
+
+    // Cmd+B: Bold
+    if (e.metaKey && e.key === 'b') {
+      e.preventDefault();
+      const wrapper = '**';
+      newValue = text.substring(0, start) + wrapper + selectedText + wrapper + text.substring(end);
+      newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
+    }
+    // Cmd+I: Italic
+    else if (e.metaKey && e.key === 'i') {
+      e.preventDefault();
+      const wrapper = '*';
+      newValue = text.substring(0, start) + wrapper + selectedText + wrapper + text.substring(end);
+      newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
+    }
+    // Cmd+K: Link
+    else if (e.metaKey && e.key === 'k') {
+      e.preventDefault();
+      const linkText = selectedText || 'text';
+      const linkMarkdown = `[${linkText}](url)`;
+      newValue = text.substring(0, start) + linkMarkdown + text.substring(end);
+      newCursorPos = start + linkMarkdown.length;
+    }
+    else {
+      return; // 단축키가 아니면 아무것도 하지 않음
+    }
+
+    setText(newValue);
+
+    // 커서 위치 조정
+    setTimeout(() => {
+      textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+      updateCursorPosition();
+    }, 0);
+
+    // onChange 호출
+    if (onChange) {
+      onChange(newValue);
+    }
+  }, [text, onChange, updateCursorPosition]);
+
+  // 키보드 이벤트 통합 핸들러
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab') {
+      handleTab(e);
+    } else if (e.key === 'Enter') {
+      handleEnter(e);
+    } else {
+      handleShortcut(e);
+    }
+  }, [handleTab, handleEnter, handleShortcut]);
+
   // 클린업: 컴포넌트 언마운트 시 타이머 정리
   useEffect(() => {
     return () => {
@@ -112,6 +233,7 @@ const Editor: React.FC<EditorProps> = ({
           onScroll={handleScroll}
           onClick={handleCursorUpdate}
           onKeyUp={handleCursorUpdate}
+          onKeyDown={handleKeyDown}
         />
       </div>
     </div>
