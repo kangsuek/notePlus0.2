@@ -36,7 +36,8 @@ function createWindow() {
   // 개발 모드에서는 Vite 개발 서버 로드
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
+    // 개발자 도구는 필요시 Cmd+Option+I (macOS) 또는 F12로 열기
+    // mainWindow.webContents.openDevTools();
   } else {
     // 프로덕션에서는 빌드된 파일 로드
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
