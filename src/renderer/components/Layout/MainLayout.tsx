@@ -7,7 +7,7 @@ import StatusBar from '../StatusBar/StatusBar';
 import { UI_CONFIG, FILE_CONFIG, EDITOR_CONFIG } from '@renderer/constants';
 import type { CursorPosition } from '@renderer/types';
 import { rafThrottle } from '@renderer/utils/throttle';
-import { saveFile, saveFileAs, openFile } from '@renderer/utils/fileOperations';
+import { saveFile, saveFileAs, openFile, readFile } from '@renderer/utils/fileOperations';
 import './MainLayout.css';
 
 const MainLayout: React.FC = () => {
@@ -183,6 +183,20 @@ const MainLayout: React.FC = () => {
     }
   }, []);
 
+  // 최근 파일에서 파일 열기 (Sidebar에서 더블클릭)
+  const handleFileOpen = useCallback(async (filePath: string) => {
+    const result = await readFile(filePath);
+    if (result.success && result.content) {
+      setMarkdownText(result.content);
+      setCurrentFilePath(filePath);
+      const fileName = filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
+      setCurrentFileName(fileName);
+      setIsDirty(false);
+    } else {
+      console.error('Failed to open file:', result.error);
+    }
+  }, []);
+
   // 키보드 단축키 처리
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -205,6 +219,25 @@ const MainLayout: React.FC = () => {
     };
   }, [handleSave, handleOpen]);
 
+  // 창 닫기 전 확인 (저장하지 않은 변경사항이 있을 경우)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent): string | undefined => {
+      if (isDirty) {
+        e.preventDefault();
+        // Chrome에서는 returnValue를 설정해야 함
+        e.returnValue = '';
+        return '';
+      }
+      return undefined;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isDirty]);
+
   // 클린업
   useEffect(() => {
     return () => {
@@ -222,6 +255,7 @@ const MainLayout: React.FC = () => {
           currentFileName={currentFileName}
           onFileNameChange={handleFileNameChange}
           isDirty={isDirty}
+          onFileOpen={handleFileOpen}
         />
         <Editor
           value={markdownText}

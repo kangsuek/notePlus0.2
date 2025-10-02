@@ -55,6 +55,7 @@ export interface SidebarProps {
   currentFileName?: string;
   onFileNameChange?: (newFileName: string) => void;
   isDirty?: boolean;
+  onFileOpen?: (filePath: string) => Promise<void>;
 }
 
 /**

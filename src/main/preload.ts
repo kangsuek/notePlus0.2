@@ -56,6 +56,8 @@ const electronAPI: ElectronAPI = {
       'dialog:saveFile',
       'file:read',
       'file:write',
+      'recentFiles:get',
+      'recentFiles:remove',
       'app:getPath',
     ];
 

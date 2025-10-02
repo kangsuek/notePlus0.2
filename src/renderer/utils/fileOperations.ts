@@ -15,6 +15,17 @@ interface ReadFileResult {
   error?: string;
 }
 
+export interface RecentFile {
+  path: string;
+  lastOpened: Date;
+}
+
+interface RecentFilesResult {
+  success: boolean;
+  files?: RecentFile[];
+  error?: string;
+}
+
 /**
  * 파일 저장 다이얼로그 표시
  * @returns 선택된 파일 경로 또는 null (취소 시)
@@ -202,4 +213,89 @@ export async function openFile(): Promise<ReadFileResult & { filePath?: string }
     ...result,
     filePath: result.success ? filePath : undefined,
   };
+}
+
+/**
+ * 최근 파일 목록 가져오기
+ * @returns 최근 파일 목록
+ */
+export async function getRecentFiles(): Promise<RecentFilesResult> {
+  if (!window.electronAPI) {
+    return {
+      success: false,
+      error: 'electronAPI is not available',
+    };
+  }
+
+  try {
+    const result = await window.electronAPI.invoke('recentFiles:get');
+
+    if (typeof result === 'object' && result !== null && 'success' in result) {
+      const recentFilesResult = result as {
+        success: boolean;
+        files?: Array<{ path: string; lastOpened: string }>;
+        error?: string;
+      };
+
+      if (recentFilesResult.success && recentFilesResult.files) {
+        // Date 객체로 변환
+        const files: RecentFile[] = recentFilesResult.files.map((file) => ({
+          path: file.path,
+          lastOpened: new Date(file.lastOpened),
+        }));
+
+        return {
+          success: true,
+          files,
+        };
+      }
+
+      return {
+        success: false,
+        error: recentFilesResult.error || 'Unknown error',
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Invalid response from main process',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * 최근 파일 목록에서 제거
+ * @param filePath 제거할 파일 경로
+ * @returns 성공 여부
+ */
+export async function removeRecentFile(filePath: string): Promise<{ success: boolean; error?: string }> {
+  if (!window.electronAPI) {
+    return {
+      success: false,
+      error: 'electronAPI is not available',
+    };
+  }
+
+  try {
+    const result = await window.electronAPI.invoke('recentFiles:remove', filePath);
+
+    if (typeof result === 'object' && result !== null && 'success' in result) {
+      return result as { success: boolean; error?: string };
+    }
+
+    return {
+      success: false,
+      error: 'Invalid response from main process',
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
 }

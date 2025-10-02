@@ -1,12 +1,17 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
+import { RecentFilesManager } from './RecentFilesManager';
+import { existsSync } from 'fs';
 
 // 개발 환경 확인
 const isDev = process.env.NODE_ENV === 'development';
 
 // 메인 윈도우 인스턴스
 let mainWindow: BrowserWindow | null = null;
+
+// 최근 파일 관리자
+const recentFilesManager = new RecentFilesManager();
 
 /**
  * 메인 윈도우 생성 함수
@@ -43,6 +48,14 @@ function createWindow() {
     // 프로덕션에서는 빌드된 파일 로드
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
+
+  // 윈도우 닫기 전 확인 (저장하지 않은 변경사항이 있을 경우)
+  mainWindow.on('close', async (event) => {
+    if (!mainWindow) return;
+
+    // 렌더러로부터 저장 여부 확인 (isDirty 상태 확인)
+    // 렌더러에서 beforeunload 이벤트로 처리
+  });
 
   // 윈도우가 닫힐 때
   mainWindow.on('closed', () => {
@@ -93,6 +106,8 @@ function setupIpcHandlers() {
   ipcMain.handle('file:write', async (_event, filePath: string, content: string) => {
     try {
       await fs.writeFile(filePath, content, 'utf-8');
+      // 최근 파일 목록에 추가
+      recentFilesManager.addFile(filePath);
       return { success: true };
     } catch (error) {
       console.error('Failed to write file:', error);
@@ -107,9 +122,48 @@ function setupIpcHandlers() {
   ipcMain.handle('file:read', async (_event, filePath: string) => {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
+      // 최근 파일 목록에 추가
+      recentFilesManager.addFile(filePath);
       return { success: true, content };
     } catch (error) {
       console.error('Failed to read file:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  });
+
+  // 최근 파일 목록 조회
+  ipcMain.handle('recentFiles:get', async () => {
+    try {
+      const files = recentFilesManager.getFiles();
+      // 파일 존재 여부 검증 및 필터링
+      const validFiles = files.filter((file) => {
+        const exists = existsSync(file.path);
+        // 존재하지 않는 파일은 목록에서 제거
+        if (!exists) {
+          recentFilesManager.removeFile(file.path);
+        }
+        return exists;
+      });
+      return { success: true, files: validFiles };
+    } catch (error) {
+      console.error('Failed to get recent files:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  });
+
+  // 최근 파일에서 제거
+  ipcMain.handle('recentFiles:remove', async (_event, filePath: string) => {
+    try {
+      recentFilesManager.removeFile(filePath);
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to remove recent file:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',

@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "dompurify": "^3.2.7",
-    "electron-store": "^8.1.0",
+    "electron-store": "^8.2.0",
     "marked": "^9.1.6",
     "mathjs": "^12.4.3",
     "react": "^18.2.0",

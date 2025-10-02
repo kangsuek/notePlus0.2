@@ -142,8 +142,13 @@
   transition: background-color 0.2s;
 }
 
-.sidebar-actions button:hover {
+.sidebar-actions button:hover:not(:disabled) {
   background-color: var(--hover-background);
+}
+
+.sidebar-actions button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .sidebar-content {
@@ -164,5 +169,46 @@
 .empty-state p {
   color: var(--text-secondary);
   font-size: 13px;
+}
+
+/* 파일 목록 */
+.file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.file-item {
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-item:hover {
+  background-color: var(--hover-background);
+}
+
+.file-item.selected {
+  background-color: var(--selection-background, rgba(0, 122, 255, 0.1));
+  border: 1px solid var(--selection-border, rgba(0, 122, 255, 0.3));
+}
+
+.file-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-time {
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
