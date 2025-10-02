@@ -34,6 +34,8 @@ export interface EditorProps {
   onChange?: (value: string) => void;
   onCursorChange?: (position: CursorPosition) => void;
   debounceMs?: number;
+  onScroll?: (event: React.UIEvent<HTMLTextAreaElement>) => void;
+  onTextareaRef?: (ref: HTMLTextAreaElement | null) => void;
 }
 
 /**
@@ -122,7 +124,7 @@ export interface AppSettings {
 /**
  * IPC 채널 타입
  */
-export type IPCChannel = 
+export type IPCChannel =
   | 'file:open'
   | 'file:save'
   | 'file:save-as'
@@ -131,4 +133,3 @@ export type IPCChannel =
   | 'window:close'
   | 'window:minimize'
   | 'window:maximize';
-

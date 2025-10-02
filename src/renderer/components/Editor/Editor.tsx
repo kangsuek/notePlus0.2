@@ -9,7 +9,9 @@ const Editor: React.FC<EditorProps> = ({
   value: controlledValue,
   onChange,
   onCursorChange,
-  debounceMs = 0
+  debounceMs = 0,
+  onScroll,
+  onTextareaRef,
 }) => {
   const [text, setText] = useState(controlledValue || '');
   const [currentLine, setCurrentLine] = useState(1);
@@ -43,34 +45,45 @@ const Editor: React.FC<EditorProps> = ({
   }, [text, onCursorChange]);
 
   // 텍스트 변경 핸들러 (디바운싱 적용)
-  const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    setText(newValue);
+  const handleTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const newValue = e.target.value;
+      setText(newValue);
 
-    if (onChange) {
-      if (debounceMs > 0) {
-        // 디바운싱: 이전 타이머 취소
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-        }
-        // 새 타이머 설정
-        debounceTimerRef.current = setTimeout(() => {
+      if (onChange) {
+        if (debounceMs > 0) {
+          // 디바운싱: 이전 타이머 취소
+          if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+          }
+          // 새 타이머 설정
+          debounceTimerRef.current = setTimeout(() => {
+            onChange(newValue);
+          }, debounceMs);
+        } else {
+          // 디바운싱 없이 즉시 호출
           onChange(newValue);
-        }, debounceMs);
-      } else {
-        // 디바운싱 없이 즉시 호출
-        onChange(newValue);
+        }
       }
-    }
-  }, [onChange, debounceMs]);
+    },
+    [onChange, debounceMs]
+  );
 
   // 스크롤 동기화 핸들러
-  const handleScroll = useCallback(() => {
-    if (!textareaRef.current || !lineNumbersRef.current) return;
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLTextAreaElement>) => {
+      if (!textareaRef.current || !lineNumbersRef.current) return;
 
-    // textarea의 스크롤을 line numbers에 동기화
-    lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
-  }, []);
+      // textarea의 스크롤을 line numbers에 동기화
+      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+
+      // 부모 컴포넌트에 스크롤 이벤트 전달 (Editor ↔ Preview 동기화)
+      if (onScroll) {
+        onScroll(e);
+      }
+    },
+    [onScroll]
+  );
 
   // 클릭 또는 키보드 이벤트 시 커서 위치 업데이트
   const handleCursorUpdate = useCallback(() => {
@@ -78,54 +91,22 @@ const Editor: React.FC<EditorProps> = ({
   }, [updateCursorPosition]);
 
   // Tab 키 처리: 스페이스 삽입
-  const handleTab = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    e.preventDefault();
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const spaces = ' '.repeat(EDITOR_CONFIG.TAB_SIZE);
-
-    const newValue = text.substring(0, start) + spaces + text.substring(end);
-    setText(newValue);
-
-    // 커서 위치 조정
-    setTimeout(() => {
-      textarea.selectionStart = textarea.selectionEnd = start + spaces.length;
-      updateCursorPosition();
-    }, 0);
-
-    // onChange 호출
-    if (onChange) {
-      onChange(newValue);
-    }
-  }, [text, onChange, updateCursorPosition]);
-
-  // Enter 키 처리: 자동 들여쓰기
-  const handleEnter = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const textBeforeEnter = text.substring(0, start);
-    const lines = textBeforeEnter.split('\n');
-    const currentLineText = lines[lines.length - 1] || '';
-
-    // 현재 줄의 들여쓰기 감지
-    const indentMatch = currentLineText.match(/^(\s+)/);
-    const indent = indentMatch?.[1] || '';
-
-    // 들여쓰기가 있는 경우에만 처리
-    if (indent && indent.length > 0) {
+  const handleTab = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       e.preventDefault();
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
-      const newValue = text.substring(0, start) + '\n' + indent + text.substring(end);
+      const spaces = ' '.repeat(EDITOR_CONFIG.TAB_SIZE);
+
+      const newValue = text.substring(0, start) + spaces + text.substring(end);
       setText(newValue);
 
       // 커서 위치 조정
       setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + 1 + indent.length;
+        textarea.selectionStart = textarea.selectionEnd = start + spaces.length;
         updateCursorPosition();
       }, 0);
 
@@ -133,70 +114,115 @@ const Editor: React.FC<EditorProps> = ({
       if (onChange) {
         onChange(newValue);
       }
-    }
-  }, [text, onChange, updateCursorPosition]);
+    },
+    [text, onChange, updateCursorPosition]
+  );
+
+  // Enter 키 처리: 자동 들여쓰기
+  const handleEnter = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
+      const textBeforeEnter = text.substring(0, start);
+      const lines = textBeforeEnter.split('\n');
+      const currentLineText = lines[lines.length - 1] || '';
+
+      // 현재 줄의 들여쓰기 감지
+      const indentMatch = currentLineText.match(/^(\s+)/);
+      const indent = indentMatch?.[1] || '';
+
+      // 들여쓰기가 있는 경우에만 처리
+      if (indent && indent.length > 0) {
+        e.preventDefault();
+        const end = textarea.selectionEnd;
+        const newValue = text.substring(0, start) + '\n' + indent + text.substring(end);
+        setText(newValue);
+
+        // 커서 위치 조정
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = start + 1 + indent.length;
+          updateCursorPosition();
+        }, 0);
+
+        // onChange 호출
+        if (onChange) {
+          onChange(newValue);
+        }
+      }
+    },
+    [text, onChange, updateCursorPosition]
+  );
 
   // 단축키 처리: Cmd+B, Cmd+I, Cmd+K
-  const handleShortcut = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+  const handleShortcut = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = text.substring(start, end);
-    let newValue = text;
-    let newCursorPos = start;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = text.substring(start, end);
+      let newValue = text;
+      let newCursorPos = start;
 
-    // Cmd+B: Bold
-    if (e.metaKey && e.key === 'b') {
-      e.preventDefault();
-      const wrapper = MARKDOWN_SYNTAX.BOLD;
-      newValue = text.substring(0, start) + wrapper + selectedText + wrapper + text.substring(end);
-      newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
-    }
-    // Cmd+I: Italic
-    else if (e.metaKey && e.key === 'i') {
-      e.preventDefault();
-      const wrapper = MARKDOWN_SYNTAX.ITALIC;
-      newValue = text.substring(0, start) + wrapper + selectedText + wrapper + text.substring(end);
-      newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
-    }
-    // Cmd+K: Link
-    else if (e.metaKey && e.key === 'k') {
-      e.preventDefault();
-      const linkText = selectedText || 'text';
-      const linkMarkdown = MARKDOWN_SYNTAX.LINK_TEMPLATE.replace('text', linkText);
-      newValue = text.substring(0, start) + linkMarkdown + text.substring(end);
-      newCursorPos = start + linkMarkdown.length;
-    }
-    else {
-      return; // 단축키가 아니면 아무것도 하지 않음
-    }
+      // Cmd+B: Bold
+      if (e.metaKey && e.key === 'b') {
+        e.preventDefault();
+        const wrapper = MARKDOWN_SYNTAX.BOLD;
+        newValue =
+          text.substring(0, start) + wrapper + selectedText + wrapper + text.substring(end);
+        newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
+      }
+      // Cmd+I: Italic
+      else if (e.metaKey && e.key === 'i') {
+        e.preventDefault();
+        const wrapper = MARKDOWN_SYNTAX.ITALIC;
+        newValue =
+          text.substring(0, start) + wrapper + selectedText + wrapper + text.substring(end);
+        newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
+      }
+      // Cmd+K: Link
+      else if (e.metaKey && e.key === 'k') {
+        e.preventDefault();
+        const linkText = selectedText || 'text';
+        const linkMarkdown = MARKDOWN_SYNTAX.LINK_TEMPLATE.replace('text', linkText);
+        newValue = text.substring(0, start) + linkMarkdown + text.substring(end);
+        newCursorPos = start + linkMarkdown.length;
+      } else {
+        return; // 단축키가 아니면 아무것도 하지 않음
+      }
 
-    setText(newValue);
+      setText(newValue);
 
-    // 커서 위치 조정
-    setTimeout(() => {
-      textarea.selectionStart = textarea.selectionEnd = newCursorPos;
-      updateCursorPosition();
-    }, 0);
+      // 커서 위치 조정
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+        updateCursorPosition();
+      }, 0);
 
-    // onChange 호출
-    if (onChange) {
-      onChange(newValue);
-    }
-  }, [text, onChange, updateCursorPosition]);
+      // onChange 호출
+      if (onChange) {
+        onChange(newValue);
+      }
+    },
+    [text, onChange, updateCursorPosition]
+  );
 
   // 키보드 이벤트 통합 핸들러
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Tab') {
-      handleTab(e);
-    } else if (e.key === 'Enter') {
-      handleEnter(e);
-    } else {
-      handleShortcut(e);
-    }
-  }, [handleTab, handleEnter, handleShortcut]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Tab') {
+        handleTab(e);
+      } else if (e.key === 'Enter') {
+        handleEnter(e);
+      } else {
+        handleShortcut(e);
+      }
+    },
+    [handleTab, handleEnter, handleShortcut]
+  );
 
   // 클린업: 컴포넌트 언마운트 시 타이머 정리
   useEffect(() => {
@@ -236,6 +262,13 @@ const Editor: React.FC<EditorProps> = ({
     };
   }, []);
 
+  // textarea ref를 부모 컴포넌트에 전달 (스크롤 동기화용)
+  useEffect(() => {
+    if (onTextareaRef) {
+      onTextareaRef(textareaRef.current);
+    }
+  }, [onTextareaRef]);
+
   return (
     <div className="editor-section" data-testid="editor-section">
       <div className="editor-header">
@@ -266,4 +299,3 @@ const Editor: React.FC<EditorProps> = ({
 };
 
 export default Editor;
-
