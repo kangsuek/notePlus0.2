@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { RecentFilesManager } from './RecentFilesManager';
 import { existsSync } from 'fs';
+import { setupMenu } from './menu';
 
 // 개발 환경 확인
 const isDev = process.env.NODE_ENV === 'development';
@@ -12,6 +13,10 @@ let mainWindow: BrowserWindow | null = null;
 
 // 최근 파일 관리자
 const recentFilesManager = new RecentFilesManager();
+
+// 최근 저장/열기 위치 기억
+let lastSavePath: string | undefined;
+let lastOpenPath: string | undefined;
 
 /**
  * 메인 윈도우 생성 함수
@@ -71,16 +76,26 @@ function setupIpcHandlers() {
   ipcMain.handle('dialog:saveFile', async () => {
     if (!mainWindow) return { canceled: true };
 
+    // 기본 경로 설정: 최근 저장 위치 또는 Documents 폴더
+    const defaultPath = lastSavePath
+      ? path.join(path.dirname(lastSavePath), 'untitled.md')
+      : path.join(app.getPath('documents'), 'untitled.md');
+
     const result = await dialog.showSaveDialog(mainWindow, {
       title: '파일 저장',
-      defaultPath: 'untitled.md',
+      defaultPath,
       filters: [
-        { name: 'Markdown', extensions: ['md'] },
-        { name: 'Text', extensions: ['txt'] },
-        { name: 'All Files', extensions: ['*'] },
+        { name: 'Markdown 파일', extensions: ['md'] },
+        { name: '텍스트 파일', extensions: ['txt'] },
+        { name: '모든 파일', extensions: ['*'] },
       ],
       properties: ['createDirectory', 'showOverwriteConfirmation'],
     });
+
+    // 파일이 선택되면 경로 저장
+    if (!result.canceled && result.filePath) {
+      lastSavePath = result.filePath;
+    }
 
     return result;
   });
@@ -89,15 +104,26 @@ function setupIpcHandlers() {
   ipcMain.handle('dialog:openFile', async () => {
     if (!mainWindow) return { canceled: true };
 
+    // 기본 경로 설정: 최근 열기 위치 또는 Documents 폴더
+    const defaultPath = lastOpenPath
+      ? path.dirname(lastOpenPath)
+      : app.getPath('documents');
+
     const result = await dialog.showOpenDialog(mainWindow, {
       title: '파일 열기',
+      defaultPath,
       filters: [
-        { name: 'Markdown', extensions: ['md'] },
-        { name: 'Text', extensions: ['txt'] },
-        { name: 'All Files', extensions: ['*'] },
+        { name: 'Markdown 파일', extensions: ['md'] },
+        { name: '텍스트 파일', extensions: ['txt'] },
+        { name: '모든 파일', extensions: ['*'] },
       ],
-      properties: ['openFile'],
+      properties: ['openFile'], // 단일 파일 선택
     });
+
+    // 파일이 선택되면 경로 저장
+    if (!result.canceled && result.filePaths && result.filePaths.length > 0) {
+      lastOpenPath = result.filePaths[0];
+    }
 
     return result;
   });
@@ -178,6 +204,7 @@ function setupIpcHandlers() {
 app.whenReady().then(() => {
   setupIpcHandlers();
   createWindow();
+  setupMenu(mainWindow); // 메뉴 설정
 
   // macOS에서 dock 아이콘 클릭 시 윈도우 재생성
   app.on('activate', () => {

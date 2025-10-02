@@ -197,15 +197,50 @@ const MainLayout: React.FC = () => {
     }
   }, []);
 
+  // 새 파일 생성 (Cmd+N)
+  const handleNew = useCallback(() => {
+    if (isDirty) {
+      const confirmed = window.confirm('저장하지 않은 변경사항이 있습니다. 계속하시겠습니까?');
+      if (!confirmed) return;
+    }
+    
+    setMarkdownText('');
+    setCurrentFilePath(null);
+    setCurrentFileName(FILE_CONFIG.DEFAULT_FILENAME);
+    setIsDirty(false);
+  }, [isDirty]);
+
+  // 다른 이름으로 저장 (Cmd+Shift+S)
+  const handleSaveAs = useCallback(async () => {
+    const result = await saveFileAs(markdownText);
+    if (result.success && result.filePath) {
+      setCurrentFilePath(result.filePath);
+      const fileName = result.filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
+      setCurrentFileName(fileName);
+      setIsDirty(false);
+      showStatusTemporarily();
+    }
+  }, [markdownText, showStatusTemporarily]);
+
   // 키보드 단축키 처리
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd+S (macOS) 또는 Ctrl+S (Windows/Linux)
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+      // Cmd+N (macOS) 또는 Ctrl+N (Windows/Linux) - 새 파일
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault();
+        handleNew();
+      }
+      // Cmd+S (macOS) 또는 Ctrl+S (Windows/Linux) - 저장
+      else if ((e.metaKey || e.ctrlKey) && e.key === 's' && !e.shiftKey) {
         e.preventDefault();
         handleSave();
       }
-      // Cmd+O (macOS) 또는 Ctrl+O (Windows/Linux)
+      // Cmd+Shift+S (macOS) 또는 Ctrl+Shift+S (Windows/Linux) - 다른 이름으로 저장
+      else if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 's') {
+        e.preventDefault();
+        handleSaveAs();
+      }
+      // Cmd+O (macOS) 또는 Ctrl+O (Windows/Linux) - 열기
       else if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
         e.preventDefault();
         handleOpen();
@@ -217,7 +252,40 @@ const MainLayout: React.FC = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleSave, handleOpen]);
+  }, [handleNew, handleSave, handleSaveAs, handleOpen]);
+
+  // 메뉴 이벤트 리스너 (IPC)
+  useEffect(() => {
+    if (!window.electronAPI) return;
+
+    // 메뉴 → 새 파일
+    window.electronAPI.on('menu:new-file', () => {
+      handleNew();
+    });
+
+    // 메뉴 → 열기
+    window.electronAPI.on('menu:open-file', () => {
+      handleOpen();
+    });
+
+    // 메뉴 → 저장
+    window.electronAPI.on('menu:save-file', () => {
+      handleSave();
+    });
+
+    // 메뉴 → 다른 이름으로 저장
+    window.electronAPI.on('menu:save-file-as', () => {
+      handleSaveAs();
+    });
+
+    // 메뉴 → 사이드바 토글
+    window.electronAPI.on('menu:toggle-sidebar', () => {
+      // TODO: Sidebar 토글 구현
+      console.log('Toggle sidebar');
+    });
+
+    // 정리: IPC 리스너 제거는 electron에서 자동으로 처리됨
+  }, [handleNew, handleOpen, handleSave, handleSaveAs]);
 
   // 창 닫기 전 확인 (저장하지 않은 변경사항이 있을 경우)
   useEffect(() => {

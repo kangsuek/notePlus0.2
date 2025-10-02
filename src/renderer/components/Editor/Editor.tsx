@@ -169,7 +169,7 @@ const Editor: React.FC<EditorProps> = ({
       let newCursorPos = start;
 
       // Cmd+B: Bold
-      if (e.metaKey && e.key === 'b') {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
         e.preventDefault();
         const wrapper = MARKDOWN_SYNTAX.BOLD;
         newValue =
@@ -177,7 +177,7 @@ const Editor: React.FC<EditorProps> = ({
         newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
       }
       // Cmd+I: Italic
-      else if (e.metaKey && e.key === 'i') {
+      else if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
         e.preventDefault();
         const wrapper = MARKDOWN_SYNTAX.ITALIC;
         newValue =
@@ -185,12 +185,36 @@ const Editor: React.FC<EditorProps> = ({
         newCursorPos = selectedText ? end + wrapper.length * 2 : start + wrapper.length;
       }
       // Cmd+K: Link
-      else if (e.metaKey && e.key === 'k') {
+      else if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         const linkText = selectedText || 'text';
         const linkMarkdown = MARKDOWN_SYNTAX.LINK_TEMPLATE.replace('text', linkText);
         newValue = text.substring(0, start) + linkMarkdown + text.substring(end);
         newCursorPos = start + linkMarkdown.length;
+      }
+      // Cmd+/: 주석 (HTML 주석)
+      else if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        if (selectedText) {
+          // 선택된 텍스트를 주석으로 감싸기
+          const comment = `<!-- ${selectedText} -->`;
+          newValue = text.substring(0, start) + comment + text.substring(end);
+          newCursorPos = start + comment.length;
+        } else {
+          // 현재 줄을 주석 처리
+          const textBeforeStart = text.substring(0, start);
+          const lines = textBeforeStart.split('\n');
+          const lastLine = lines[lines.length - 1];
+          const currentLineStart = textBeforeStart.length - (lastLine?.length || 0);
+          const nextNewlinePos = text.indexOf('\n', end);
+          const currentLineEnd = nextNewlinePos === -1 ? text.length : nextNewlinePos;
+          const currentLineText = text.substring(currentLineStart, currentLineEnd);
+          
+          const comment = `<!-- ${currentLineText} -->`;
+          newValue =
+            text.substring(0, currentLineStart) + comment + text.substring(currentLineEnd);
+          newCursorPos = currentLineStart + comment.length;
+        }
       } else {
         return; // 단축키가 아니면 아무것도 하지 않음
       }

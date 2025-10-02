@@ -41,6 +41,16 @@ const electronAPI: ElectronAPI = {
       'file:opened',
       'file:saved',
       'menu:action',
+      'menu:new-file',
+      'menu:open-file',
+      'menu:save-file',
+      'menu:save-file-as',
+      'menu:toggle-sidebar',
+      'menu:find',
+      'menu:replace',
+      'menu:shortcuts',
+      'menu:about',
+      'menu:preferences',
       'theme:changed',
     ];
 
