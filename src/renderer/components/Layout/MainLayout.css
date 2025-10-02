@@ -21,7 +21,7 @@
 }
 
 /* Preview가 숨겨진 경우 Editor가 전체 너비 차지 */
-.main-content:has(.preview-section:not([style*="display: none"])) {
+.main-content:has(.preview-section:not([style*='display: none'])) {
   /* Preview가 표시된 경우: 기본 3단 레이아웃 */
 }
 
@@ -40,4 +40,3 @@
     background-color: var(--background-primary);
   }
 }
-

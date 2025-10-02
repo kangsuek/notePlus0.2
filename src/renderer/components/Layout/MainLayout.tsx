@@ -182,7 +182,7 @@ const MainLayout: React.FC = () => {
       const fileName = result.filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
       setCurrentFileName(fileName);
       setIsDirty(false);
-      
+
       // 파일 확장자에 따라 프리뷰 표시 여부 결정
       setShowPreview(shouldShowPreview(result.filePath));
     }
@@ -197,7 +197,7 @@ const MainLayout: React.FC = () => {
       const fileName = filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
       setCurrentFileName(fileName);
       setIsDirty(false);
-      
+
       // 파일 확장자에 따라 프리뷰 표시 여부 결정
       setShowPreview(shouldShowPreview(filePath));
     } else {
@@ -211,12 +211,12 @@ const MainLayout: React.FC = () => {
       const confirmed = window.confirm('저장하지 않은 변경사항이 있습니다. 계속하시겠습니까?');
       if (!confirmed) return;
     }
-    
+
     setMarkdownText('');
     setCurrentFilePath(null);
     setCurrentFileName(FILE_CONFIG.DEFAULT_FILENAME);
     setIsDirty(false);
-    
+
     // 새 파일은 기본적으로 프리뷰 표시 (untitled.md)
     setShowPreview(true);
   }, [isDirty]);
@@ -230,7 +230,7 @@ const MainLayout: React.FC = () => {
       setCurrentFileName(fileName);
       setIsDirty(false);
       showStatusTemporarily();
-      
+
       // 저장된 파일 확장자에 따라 프리뷰 표시 여부 결정
       setShowPreview(shouldShowPreview(result.filePath));
     }
