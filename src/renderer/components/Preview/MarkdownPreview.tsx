@@ -29,24 +29,57 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
     try {
       // 1. 마크다운을 HTML로 변환
       const rawHtml = marked.parse(markdown, { async: false }) as string;
-      
+
       // 2. DOMPurify로 위험한 HTML 제거 (XSS 방지)
       const sanitizedHtml = DOMPurify.sanitize(rawHtml, {
         ALLOWED_TAGS: [
-          'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-          'p', 'br', 'hr',
-          'strong', 'em', 'del', 's', 'ins', 'u',
-          'a', 'img',
-          'ul', 'ol', 'li',
-          'blockquote', 'pre', 'code',
-          'table', 'thead', 'tbody', 'tr', 'th', 'td',
-          'div', 'span',
+          'h1',
+          'h2',
+          'h3',
+          'h4',
+          'h5',
+          'h6',
+          'p',
+          'br',
+          'hr',
+          'strong',
+          'em',
+          'del',
+          's',
+          'ins',
+          'u',
+          'a',
+          'img',
+          'ul',
+          'ol',
+          'li',
+          'blockquote',
+          'pre',
+          'code',
+          'table',
+          'thead',
+          'tbody',
+          'tr',
+          'th',
+          'td',
+          'div',
+          'span',
           'input', // task list를 위한 checkbox
         ],
         ALLOWED_ATTR: [
-          'href', 'src', 'alt', 'title', 'class', 'id',
-          'target', 'rel', 'align', 'valign',
-          'type', 'checked', 'disabled', // checkbox 속성
+          'href',
+          'src',
+          'alt',
+          'title',
+          'class',
+          'id',
+          'target',
+          'rel',
+          'align',
+          'valign',
+          'type',
+          'checked',
+          'disabled', // checkbox 속성
         ],
       });
 
@@ -77,4 +110,3 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
 };
 
 export default React.memo(MarkdownPreview);
-

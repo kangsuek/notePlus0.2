@@ -27,17 +27,17 @@ export async function showSaveDialog(): Promise<string | null> {
 
   try {
     const result = await window.electronAPI.invoke('dialog:saveFile');
-    
+
     if (typeof result === 'object' && result !== null && 'canceled' in result) {
       const dialogResult = result as { canceled: boolean; filePath?: string };
-      
+
       if (dialogResult.canceled) {
         return null;
       }
-      
+
       return dialogResult.filePath || null;
     }
-    
+
     return null;
   } catch (error) {
     console.error('Failed to show save dialog:', error);
@@ -57,17 +57,17 @@ export async function showOpenDialog(): Promise<string | null> {
 
   try {
     const result = await window.electronAPI.invoke('dialog:openFile');
-    
+
     if (typeof result === 'object' && result !== null && 'canceled' in result) {
       const dialogResult = result as { canceled: boolean; filePaths?: string[] };
-      
+
       if (dialogResult.canceled || !dialogResult.filePaths || dialogResult.filePaths.length === 0) {
         return null;
       }
-      
+
       return dialogResult.filePaths[0] || null;
     }
-    
+
     return null;
   } catch (error) {
     console.error('Failed to show open dialog:', error);
@@ -91,23 +91,23 @@ export async function saveFile(filePath: string, content: string): Promise<SaveF
 
   try {
     const result = await window.electronAPI.invoke('file:write', filePath, content);
-    
+
     if (typeof result === 'object' && result !== null && 'success' in result) {
       const writeResult = result as { success: boolean; error?: string };
-      
+
       if (writeResult.success) {
         return {
           success: true,
           filePath,
         };
       }
-      
+
       return {
         success: false,
         error: writeResult.error || 'Unknown error',
       };
     }
-    
+
     return {
       success: false,
       error: 'Invalid response from main process',
@@ -135,23 +135,23 @@ export async function readFile(filePath: string): Promise<ReadFileResult> {
 
   try {
     const result = await window.electronAPI.invoke('file:read', filePath);
-    
+
     if (typeof result === 'object' && result !== null && 'success' in result) {
       const readResult = result as { success: boolean; content?: string; error?: string };
-      
+
       if (readResult.success && readResult.content !== undefined) {
         return {
           success: true,
           content: readResult.content,
         };
       }
-      
+
       return {
         success: false,
         error: readResult.error || 'Unknown error',
       };
     }
-    
+
     return {
       success: false,
       error: 'Invalid response from main process',
@@ -171,14 +171,14 @@ export async function readFile(filePath: string): Promise<ReadFileResult> {
  */
 export async function saveFileAs(content: string): Promise<SaveFileResult> {
   const filePath = await showSaveDialog();
-  
+
   if (!filePath) {
     return {
       success: false,
       error: 'User canceled',
     };
   }
-  
+
   return await saveFile(filePath, content);
 }
 
@@ -188,19 +188,18 @@ export async function saveFileAs(content: string): Promise<SaveFileResult> {
  */
 export async function openFile(): Promise<ReadFileResult & { filePath?: string }> {
   const filePath = await showOpenDialog();
-  
+
   if (!filePath) {
     return {
       success: false,
       error: 'User canceled',
     };
   }
-  
+
   const result = await readFile(filePath);
-  
+
   return {
     ...result,
     filePath: result.success ? filePath : undefined,
   };
 }
-
