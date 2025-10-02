@@ -326,5 +326,29 @@ describe('Editor', () => {
         expect(textarea.value).toContain('Last line');
       });
     });
+
+    it('should not calculate plain numbers', async () => {
+      render(<Editor />);
+
+      const textarea = screen.getByPlaceholderText(
+        '마크다운으로 작성하세요...'
+      ) as HTMLTextAreaElement;
+
+      // 단순 숫자 입력
+      fireEvent.change(textarea, { target: { value: '123' } });
+
+      // 커서를 라인 끝으로 이동
+      Object.defineProperty(textarea, 'selectionStart', { value: 3, writable: true });
+      Object.defineProperty(textarea, 'selectionEnd', { value: 3, writable: true });
+
+      // '=' 키 입력
+      fireEvent.keyDown(textarea, { key: '=' });
+
+      await waitFor(() => {
+        // 단순 숫자는 계산되지 않아야 함 (에러 메시지 표시)
+        expect(textarea.value).toContain('Error');
+        expect(textarea.value).toContain('Not a valid expression');
+      });
+    });
   });
 });

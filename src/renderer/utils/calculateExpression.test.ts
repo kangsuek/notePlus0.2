@@ -106,6 +106,18 @@ describe('calculateExpression', () => {
       const result = calculateExpression('   ');
       expect(result).toContain('Error');
     });
+
+    it('should return error for plain numbers (not a valid expression)', () => {
+      const result = calculateExpression('123');
+      expect(result).toContain('Error');
+      expect(result).toContain('Not a valid expression');
+    });
+
+    it('should return error for decimal numbers without operators', () => {
+      const result = calculateExpression('123.456');
+      expect(result).toContain('Error');
+      expect(result).toContain('Not a valid expression');
+    });
   });
 
   describe('보안 검증', () => {
