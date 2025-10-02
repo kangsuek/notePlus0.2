@@ -195,6 +195,13 @@
   margin-bottom: 0 !important;
 }
 
+/* 계산 결과 스타일 (파란색) */
+.markdown-preview .calc-result {
+  color: #007aff;
+  font-weight: 600;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+
 /* 스크롤바 스타일 (macOS) */
 .markdown-preview::-webkit-scrollbar {
   width: 8px;

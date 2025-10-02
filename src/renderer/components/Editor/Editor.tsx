@@ -232,10 +232,15 @@ const Editor: React.FC<EditorProps> = ({
         return;
       }
 
-      e.preventDefault();
-
       // 수식 계산
       const result = calculateExpression(currentLineText.trim());
+
+      // 에러가 발생한 경우 아무것도 하지 않음 (= 키만 입력되도록)
+      if (result.startsWith('Error:')) {
+        return;
+      }
+
+      e.preventDefault();
 
       // 계산 결과를 현재 줄 끝에 추가
       const newValue = text.substring(0, start) + ' = ' + result + text.substring(start);

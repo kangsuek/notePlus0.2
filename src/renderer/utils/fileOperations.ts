@@ -65,7 +65,7 @@ export async function showOpenDialog(): Promise<string | null> {
         return null;
       }
       
-      return dialogResult.filePaths[0];
+      return dialogResult.filePaths[0] || null;
     }
     
     return null;

@@ -50,7 +50,14 @@ const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ markdown }) => {
         ],
       });
 
-      return sanitizedHtml;
+      // 3. 계산 결과를 파란색으로 표시 (= 숫자 패턴)
+      // 예: "2 + 3 = 5" → "2 + 3 = <span class="calc-result">5</span>"
+      const withStyledResults = sanitizedHtml.replace(
+        /=\s*(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)/gi,
+        '= <span class="calc-result">$1</span>'
+      );
+
+      return withStyledResults;
     } catch (error) {
       // 개발 환경에서만 에러 로깅
       if (process.env.NODE_ENV === 'development') {

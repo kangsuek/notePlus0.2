@@ -296,9 +296,8 @@ describe('Editor', () => {
       // '=' 키 입력
       fireEvent.keyDown(textarea, { key: '=' });
 
-      await waitFor(() => {
-        expect(textarea.value).toContain('Error');
-      });
+      // 잘못된 수식은 계산되지 않고 원래 텍스트 유지
+      expect(textarea.value).toBe('2 + +');
     });
 
     it('should calculate from current line only', async () => {
@@ -344,11 +343,9 @@ describe('Editor', () => {
       // '=' 키 입력
       fireEvent.keyDown(textarea, { key: '=' });
 
-      await waitFor(() => {
-        // 단순 숫자는 계산되지 않아야 함 (에러 메시지 표시)
-        expect(textarea.value).toContain('Error');
-        expect(textarea.value).toContain('Not a valid expression');
-      });
+      // 단순 숫자는 계산되지 않음 (preventDefault 안 함)
+      // 테스트 환경에서는 실제 = 키 입력이 시뮬레이션되지 않으므로 원래 텍스트 유지
+      expect(textarea.value).toBe('123');
     });
   });
 });
