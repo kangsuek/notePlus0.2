@@ -3,6 +3,7 @@ import LineNumbers from './LineNumbers';
 import { EDITOR_CONFIG, MARKDOWN_SYNTAX } from '@renderer/constants';
 import type { EditorProps } from '@renderer/types';
 import { calculateLineWraps } from '@renderer/utils/lineWrapCalculator';
+import { calculateExpression } from '@renderer/utils/calculateExpression';
 import './Editor.css';
 
 const Editor: React.FC<EditorProps> = ({
@@ -210,6 +211,52 @@ const Editor: React.FC<EditorProps> = ({
     [text, onChange, updateCursorPosition]
   );
 
+  // = 키 처리: 수식 계산
+  const handleEquals = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const textarea = textareaRef.current;
+      if (!textarea) return;
+
+      const start = textarea.selectionStart;
+      const textBeforeCursor = text.substring(0, start);
+      const lines = textBeforeCursor.split('\n');
+      const currentLineText = lines[lines.length - 1] || '';
+
+      // 현재 줄이 비어있으면 계산하지 않음
+      if (!currentLineText.trim()) {
+        return;
+      }
+
+      // 이미 = 가 있으면 계산하지 않음
+      if (currentLineText.includes('=')) {
+        return;
+      }
+
+      e.preventDefault();
+
+      // 수식 계산
+      const result = calculateExpression(currentLineText.trim());
+
+      // 계산 결과를 현재 줄 끝에 추가
+      const newValue = text.substring(0, start) + ' = ' + result + text.substring(start);
+
+      setText(newValue);
+
+      // 커서 위치를 결과 뒤로 이동
+      setTimeout(() => {
+        const newCursorPos = start + 3 + result.length;
+        textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+        updateCursorPosition();
+      }, 0);
+
+      // onChange 호출
+      if (onChange) {
+        onChange(newValue);
+      }
+    },
+    [text, onChange, updateCursorPosition]
+  );
+
   // 키보드 이벤트 통합 핸들러
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -217,11 +264,13 @@ const Editor: React.FC<EditorProps> = ({
         handleTab(e);
       } else if (e.key === 'Enter') {
         handleEnter(e);
+      } else if (e.key === '=') {
+        handleEquals(e);
       } else {
         handleShortcut(e);
       }
     },
-    [handleTab, handleEnter, handleShortcut]
+    [handleTab, handleEnter, handleEquals, handleShortcut]
   );
 
   // 클린업: 컴포넌트 언마운트 시 타이머 정리

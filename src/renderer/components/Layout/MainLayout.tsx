@@ -7,12 +7,14 @@ import StatusBar from '../StatusBar/StatusBar';
 import { UI_CONFIG, FILE_CONFIG, EDITOR_CONFIG } from '@renderer/constants';
 import type { CursorPosition } from '@renderer/types';
 import { rafThrottle } from '@renderer/utils/throttle';
+import { saveFile, saveFileAs, openFile } from '@renderer/utils/fileOperations';
 import './MainLayout.css';
 
 const MainLayout: React.FC = () => {
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({ line: 1, column: 1 });
   const [isDirty, setIsDirty] = useState(false);
   const [currentFileName, setCurrentFileName] = useState<string>(FILE_CONFIG.DEFAULT_FILENAME);
+  const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
   const [showStatus, setShowStatus] = useState(false);
   const [markdownText, setMarkdownText] = useState(''); // 마크다운 텍스트 상태
   const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -145,6 +147,64 @@ const MainLayout: React.FC = () => {
     []
   );
 
+  // 파일 저장 (Cmd+S)
+  const handleSave = useCallback(async () => {
+    if (currentFilePath) {
+      // 기존 파일에 저장
+      const result = await saveFile(currentFilePath, markdownText);
+      if (result.success) {
+        setIsDirty(false);
+        showStatusTemporarily();
+      } else {
+        console.error('Failed to save file:', result.error);
+      }
+    } else {
+      // 새 파일 - Save As
+      const result = await saveFileAs(markdownText);
+      if (result.success && result.filePath) {
+        setCurrentFilePath(result.filePath);
+        const fileName = result.filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
+        setCurrentFileName(fileName);
+        setIsDirty(false);
+        showStatusTemporarily();
+      }
+    }
+  }, [currentFilePath, markdownText, showStatusTemporarily]);
+
+  // 파일 열기 (Cmd+O)
+  const handleOpen = useCallback(async () => {
+    const result = await openFile();
+    if (result.success && result.content && result.filePath) {
+      setMarkdownText(result.content);
+      setCurrentFilePath(result.filePath);
+      const fileName = result.filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
+      setCurrentFileName(fileName);
+      setIsDirty(false);
+    }
+  }, []);
+
+  // 키보드 단축키 처리
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd+S (macOS) 또는 Ctrl+S (Windows/Linux)
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      // Cmd+O (macOS) 또는 Ctrl+O (Windows/Linux)
+      else if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
+        e.preventDefault();
+        handleOpen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleSave, handleOpen]);
+
   // 클린업
   useEffect(() => {
     return () => {
@@ -164,6 +224,7 @@ const MainLayout: React.FC = () => {
           isDirty={isDirty}
         />
         <Editor
+          value={markdownText}
           onCursorChange={handleCursorChange}
           onChange={handleTextChange}
           debounceMs={EDITOR_CONFIG.DEBOUNCE_MS}

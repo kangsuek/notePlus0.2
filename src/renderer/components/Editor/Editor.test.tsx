@@ -64,9 +64,12 @@ describe('Editor', () => {
     fireEvent.change(textarea, { target: { value: 'Test' } });
 
     // 디바운스되어 마지막 호출만 실행되어야 함
-    await waitFor(() => {
-      expect(handleChange).toHaveBeenCalledTimes(1);
-    }, { timeout: 500 });
+    await waitFor(
+      () => {
+        expect(handleChange).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 500 }
+    );
   });
 
   it('should have monospace font class', () => {
@@ -122,10 +125,10 @@ describe('Editor', () => {
 
       // 텍스트 입력
       fireEvent.change(textarea, { target: { value: 'Hello' } });
-      
+
       // 커서를 중간에 위치
       textarea.setSelectionRange(2, 2); // "He|llo"
-      
+
       // Tab 키 입력
       fireEvent.keyDown(textarea, { key: 'Tab', code: 'Tab' });
 
@@ -140,10 +143,10 @@ describe('Editor', () => {
 
       // 들여쓰기가 있는 텍스트 입력
       fireEvent.change(textarea, { target: { value: '  Hello' } });
-      
+
       // 커서를 끝으로 이동
       textarea.setSelectionRange(7, 7);
-      
+
       // Enter 키 입력
       fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
 
@@ -157,7 +160,7 @@ describe('Editor', () => {
 
       fireEvent.change(textarea, { target: { value: '    Nested' } });
       textarea.setSelectionRange(10, 10);
-      
+
       fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
 
       expect(textarea.value).toBe('    Nested\n    ');
@@ -169,7 +172,7 @@ describe('Editor', () => {
 
       fireEvent.change(textarea, { target: { value: 'No indent' } });
       textarea.setSelectionRange(9, 9);
-      
+
       fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
 
       // 들여쓰기가 없으면 preventDefault가 호출되지 않음
@@ -184,10 +187,10 @@ describe('Editor', () => {
       const textarea = container.querySelector('.editor-textarea') as HTMLTextAreaElement;
 
       fireEvent.change(textarea, { target: { value: 'Hello World' } });
-      
+
       // "World" 선택
       textarea.setSelectionRange(6, 11);
-      
+
       // Cmd+B
       fireEvent.keyDown(textarea, { key: 'b', metaKey: true });
 
@@ -200,7 +203,7 @@ describe('Editor', () => {
 
       fireEvent.change(textarea, { target: { value: 'Hello World' } });
       textarea.setSelectionRange(6, 11);
-      
+
       fireEvent.keyDown(textarea, { key: 'i', metaKey: true });
 
       expect(textarea.value).toBe('Hello *World*');
@@ -212,7 +215,7 @@ describe('Editor', () => {
 
       fireEvent.change(textarea, { target: { value: 'Click here' } });
       textarea.setSelectionRange(6, 10); // "here" 선택
-      
+
       fireEvent.keyDown(textarea, { key: 'k', metaKey: true });
 
       expect(textarea.value).toBe('Click [here](url)');
@@ -224,11 +227,104 @@ describe('Editor', () => {
 
       fireEvent.change(textarea, { target: { value: 'Hello' } });
       textarea.setSelectionRange(5, 5); // 끝에 커서
-      
+
       fireEvent.keyDown(textarea, { key: 'b', metaKey: true });
 
       expect(textarea.value).toBe('Hello****');
     });
   });
-});
 
+  describe('Math calculation with = key', () => {
+    it('should calculate expression when = is typed at line end', async () => {
+      const handleChange = jest.fn();
+      render(<Editor onChange={handleChange} />);
+
+      const textarea = screen.getByPlaceholderText('마크다운으로 작성하세요...');
+
+      // '2 + 3' 입력
+      fireEvent.change(textarea, { target: { value: '2 + 3' } });
+
+      // 커서를 라인 끝으로 이동
+      Object.defineProperty(textarea, 'selectionStart', { value: 5, writable: true });
+      Object.defineProperty(textarea, 'selectionEnd', { value: 5, writable: true });
+
+      // '=' 키 입력
+      fireEvent.keyDown(textarea, { key: '=' });
+
+      // 계산 결과가 추가되어야 함
+      await waitFor(() => {
+        expect(handleChange).toHaveBeenCalledWith(expect.stringContaining('= 5'));
+      });
+    });
+
+    it('should show calculation result inline', async () => {
+      render(<Editor />);
+
+      const textarea = screen.getByPlaceholderText(
+        '마크다운으로 작성하세요...'
+      ) as HTMLTextAreaElement;
+
+      // '10 * 5' 입력
+      fireEvent.change(textarea, { target: { value: '10 * 5' } });
+
+      // 커서를 라인 끝으로 이동
+      Object.defineProperty(textarea, 'selectionStart', { value: 6, writable: true });
+      Object.defineProperty(textarea, 'selectionEnd', { value: 6, writable: true });
+
+      // '=' 키 입력
+      fireEvent.keyDown(textarea, { key: '=' });
+
+      await waitFor(() => {
+        expect(textarea.value).toContain('= 50');
+      });
+    });
+
+    it('should handle invalid expression', async () => {
+      render(<Editor />);
+
+      const textarea = screen.getByPlaceholderText(
+        '마크다운으로 작성하세요...'
+      ) as HTMLTextAreaElement;
+
+      // 잘못된 수식 입력
+      fireEvent.change(textarea, { target: { value: '2 + +' } });
+
+      // 커서를 라인 끝으로 이동
+      Object.defineProperty(textarea, 'selectionStart', { value: 5, writable: true });
+      Object.defineProperty(textarea, 'selectionEnd', { value: 5, writable: true });
+
+      // '=' 키 입력
+      fireEvent.keyDown(textarea, { key: '=' });
+
+      await waitFor(() => {
+        expect(textarea.value).toContain('Error');
+      });
+    });
+
+    it('should calculate from current line only', async () => {
+      render(<Editor />);
+
+      const textarea = screen.getByPlaceholderText(
+        '마크다운으로 작성하세요...'
+      ) as HTMLTextAreaElement;
+
+      // 여러 줄 입력
+      const multiLine = 'First line\n5 + 3\nLast line';
+      fireEvent.change(textarea, { target: { value: multiLine } });
+
+      // 두 번째 줄 끝으로 커서 이동 (5 + 3 끝)
+      Object.defineProperty(textarea, 'selectionStart', { value: 16, writable: true });
+      Object.defineProperty(textarea, 'selectionEnd', { value: 16, writable: true });
+
+      // '=' 키 입력
+      fireEvent.keyDown(textarea, { key: '=' });
+
+      await waitFor(() => {
+        // 두 번째 줄에만 결과가 추가되어야 함
+        expect(textarea.value).toContain('5 + 3 = 8');
+        expect(textarea.value).toContain('First line');
+        expect(textarea.value).toContain('Last line');
+      });
+    });
+  });
+});

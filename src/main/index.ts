@@ -1,5 +1,6 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
+import fs from 'fs/promises';
 
 // 개발 환경 확인
 const isDev = process.env.NODE_ENV === 'development';
@@ -50,9 +51,78 @@ function createWindow() {
 }
 
 /**
+ * IPC 핸들러 설정
+ */
+function setupIpcHandlers() {
+  // 파일 저장 다이얼로그
+  ipcMain.handle('dialog:saveFile', async () => {
+    if (!mainWindow) return { canceled: true };
+
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: '파일 저장',
+      defaultPath: 'untitled.md',
+      filters: [
+        { name: 'Markdown', extensions: ['md'] },
+        { name: 'Text', extensions: ['txt'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+      properties: ['createDirectory', 'showOverwriteConfirmation'],
+    });
+
+    return result;
+  });
+
+  // 파일 열기 다이얼로그
+  ipcMain.handle('dialog:openFile', async () => {
+    if (!mainWindow) return { canceled: true };
+
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: '파일 열기',
+      filters: [
+        { name: 'Markdown', extensions: ['md'] },
+        { name: 'Text', extensions: ['txt'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+      properties: ['openFile'],
+    });
+
+    return result;
+  });
+
+  // 파일 저장
+  ipcMain.handle('file:write', async (_event, filePath: string, content: string) => {
+    try {
+      await fs.writeFile(filePath, content, 'utf-8');
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to write file:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  });
+
+  // 파일 읽기
+  ipcMain.handle('file:read', async (_event, filePath: string) => {
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      return { success: true, content };
+    } catch (error) {
+      console.error('Failed to read file:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  });
+}
+
+/**
  * Electron 앱 준비 완료
  */
 app.whenReady().then(() => {
+  setupIpcHandlers();
   createWindow();
 
   // macOS에서 dock 아이콘 클릭 시 윈도우 재생성
