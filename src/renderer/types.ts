@@ -58,6 +58,10 @@ export interface SidebarProps {
   onFileOpen?: (filePath: string) => Promise<void>;
 }
 
+export interface SidebarRef {
+  refreshRecentFiles: () => void;
+}
+
 /**
  * 최근 문서 항목
  */

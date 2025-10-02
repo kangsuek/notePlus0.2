@@ -5,7 +5,7 @@ import Editor from '../Editor/Editor';
 import Preview from '../Preview/Preview';
 import StatusBar from '../StatusBar/StatusBar';
 import { UI_CONFIG, FILE_CONFIG, EDITOR_CONFIG } from '@renderer/constants';
-import type { CursorPosition } from '@renderer/types';
+import type { CursorPosition, SidebarRef } from '@renderer/types';
 import { rafThrottle } from '@renderer/utils/throttle';
 import { saveFile, saveFileAs, openFile, readFile } from '@renderer/utils/fileOperations';
 import { shouldShowPreview } from '@renderer/utils/fileUtils';
@@ -24,6 +24,7 @@ const MainLayout: React.FC = () => {
   // 스크롤 동기화를 위한 ref
   const editorTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const sidebarRef = useRef<SidebarRef | null>(null);
   const isEditorScrolling = useRef(false);
   const isPreviewScrolling = useRef(false);
 
@@ -45,6 +46,13 @@ const MainLayout: React.FC = () => {
 
   const handleCursorChange = useCallback((position: CursorPosition) => {
     setCursorPosition(position);
+  }, []);
+
+  // 최근 파일 목록 새로고침
+  const refreshRecentFiles = useCallback(() => {
+    if (sidebarRef.current) {
+      sidebarRef.current.refreshRecentFiles();
+    }
   }, []);
 
   const handleTextChange = useCallback(
@@ -152,13 +160,41 @@ const MainLayout: React.FC = () => {
   // 파일 저장 (Cmd+S)
   const handleSave = useCallback(async () => {
     if (currentFilePath) {
-      // 기존 파일에 저장
-      const result = await saveFile(currentFilePath, markdownText);
-      if (result.success) {
-        setIsDirty(false);
-        showStatusTemporarily();
+      // 파일명이 변경되었는지 확인
+      const currentPathFileName = currentFilePath.split('/').pop() || '';
+      const hasFileNameChanged = currentFileName !== currentPathFileName;
+
+      if (hasFileNameChanged) {
+        // 파일명이 변경된 경우 - 새로운 경로로 저장
+        const directory = currentFilePath.substring(0, currentFilePath.lastIndexOf('/'));
+        const newFilePath = `${directory}/${currentFileName}`;
+
+        const result = await saveFile(newFilePath, markdownText);
+        if (result.success) {
+          setCurrentFilePath(newFilePath);
+          setIsDirty(false);
+          showStatusTemporarily();
+
+          // 프리뷰 표시 여부 업데이트
+          setShowPreview(shouldShowPreview(newFilePath));
+
+          // 최근 파일 목록 새로고침
+          refreshRecentFiles();
+        } else {
+          console.error('Failed to save file:', result.error);
+        }
       } else {
-        console.error('Failed to save file:', result.error);
+        // 기존 파일에 저장
+        const result = await saveFile(currentFilePath, markdownText);
+        if (result.success) {
+          setIsDirty(false);
+          showStatusTemporarily();
+
+          // 최근 파일 목록 새로고침
+          refreshRecentFiles();
+        } else {
+          console.error('Failed to save file:', result.error);
+        }
       }
     } else {
       // 새 파일 - Save As
@@ -169,9 +205,15 @@ const MainLayout: React.FC = () => {
         setCurrentFileName(fileName);
         setIsDirty(false);
         showStatusTemporarily();
+
+        // 프리뷰 표시 여부 업데이트
+        setShowPreview(shouldShowPreview(result.filePath));
+
+        // 최근 파일 목록 새로고침
+        refreshRecentFiles();
       }
     }
-  }, [currentFilePath, markdownText, showStatusTemporarily]);
+  }, [currentFilePath, currentFileName, markdownText, showStatusTemporarily, refreshRecentFiles]);
 
   // 파일 열기 (Cmd+O)
   const handleOpen = useCallback(async () => {
@@ -185,25 +227,54 @@ const MainLayout: React.FC = () => {
 
       // 파일 확장자에 따라 프리뷰 표시 여부 결정
       setShowPreview(shouldShowPreview(result.filePath));
+
+      // 스크롤을 맨 위로 이동
+      setTimeout(() => {
+        if (editorTextareaRef.current) {
+          editorTextareaRef.current.scrollTop = 0;
+        }
+        if (previewRef.current) {
+          previewRef.current.scrollTop = 0;
+        }
+      }, 100); // DOM 업데이트 후 실행
+
+      // 최근 파일 목록 새로고침
+      refreshRecentFiles();
     }
-  }, []);
+  }, [refreshRecentFiles]);
 
   // 최근 파일에서 파일 열기 (Sidebar에서 더블클릭)
-  const handleFileOpen = useCallback(async (filePath: string) => {
-    const result = await readFile(filePath);
-    if (result.success && result.content) {
-      setMarkdownText(result.content);
-      setCurrentFilePath(filePath);
-      const fileName = filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
-      setCurrentFileName(fileName);
-      setIsDirty(false);
+  const handleFileOpen = useCallback(
+    async (filePath: string) => {
+      const result = await readFile(filePath);
+      if (result.success && result.content) {
+        setMarkdownText(result.content);
+        setCurrentFilePath(filePath);
+        const fileName = filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
+        setCurrentFileName(fileName);
+        setIsDirty(false);
 
-      // 파일 확장자에 따라 프리뷰 표시 여부 결정
-      setShowPreview(shouldShowPreview(filePath));
-    } else {
-      console.error('Failed to open file:', result.error);
-    }
-  }, []);
+        // 파일 확장자에 따라 프리뷰 표시 여부 결정
+        setShowPreview(shouldShowPreview(filePath));
+
+        // 스크롤을 맨 위로 이동
+        setTimeout(() => {
+          if (editorTextareaRef.current) {
+            editorTextareaRef.current.scrollTop = 0;
+          }
+          if (previewRef.current) {
+            previewRef.current.scrollTop = 0;
+          }
+        }, 100); // DOM 업데이트 후 실행
+
+        // 최근 파일 목록 새로고침
+        refreshRecentFiles();
+      } else {
+        console.error('Failed to open file:', result.error);
+      }
+    },
+    [refreshRecentFiles]
+  );
 
   // 새 파일 생성 (Cmd+N)
   const handleNew = useCallback(() => {
@@ -334,6 +405,7 @@ const MainLayout: React.FC = () => {
       <TitleBar />
       <div className={`main-content ${!showPreview ? 'preview-hidden' : ''}`}>
         <Sidebar
+          ref={sidebarRef}
           currentFileName={currentFileName}
           onFileNameChange={handleFileNameChange}
           isDirty={isDirty}

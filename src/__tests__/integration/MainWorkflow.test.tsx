@@ -1,6 +1,6 @@
 /**
  * 메인 워크플로우 통합 테스트
- * 
+ *
  * 사용자의 주요 작업 흐름을 테스트합니다:
  * 1. 파일 생성 → 편집 → 저장
  * 2. 수식 계산
@@ -31,7 +31,7 @@ describe('메인 워크플로우 통합 테스트', () => {
       render(<MainLayout />);
 
       // 2. Editor에 텍스트 입력
-      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...') as HTMLTextAreaElement;
+      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...');
       expect(editor).toBeInTheDocument();
 
       fireEvent.change(editor, { target: { value: '# Hello World\n\nThis is a test.' } });
@@ -69,7 +69,7 @@ describe('메인 워크플로우 통합 테스트', () => {
     it('should calculate expressions when = is typed', async () => {
       render(<MainLayout />);
 
-      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...') as HTMLTextAreaElement;
+      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...');
 
       // 수식 입력
       fireEvent.change(editor, { target: { value: '2 + 3' } });
@@ -90,7 +90,7 @@ describe('메인 워크플로우 통합 테스트', () => {
     it('should not calculate invalid expressions', () => {
       render(<MainLayout />);
 
-      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...') as HTMLTextAreaElement;
+      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...');
 
       // 잘못된 수식 입력
       fireEvent.change(editor, { target: { value: '2 + +' } });
@@ -110,7 +110,7 @@ describe('메인 워크플로우 통합 테스트', () => {
     it('should not calculate plain numbers', () => {
       render(<MainLayout />);
 
-      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...') as HTMLTextAreaElement;
+      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...');
 
       // 숫자만 입력
       fireEvent.change(editor, { target: { value: '123' } });
@@ -154,7 +154,7 @@ describe('메인 워크플로우 통합 테스트', () => {
       });
     });
 
-    it('should open file when double clicked', async () => {
+    it('should open file when clicked', async () => {
       // 최근 파일 목록 mock
       mockInvoke.mockResolvedValueOnce({
         success: true,
@@ -169,16 +169,16 @@ describe('메인 워크플로우 통합 테스트', () => {
 
       render(<MainLayout />);
 
-      // 파일 더블클릭
+      // 파일 싱글클릭
       await waitFor(() => {
         const fileItem = screen.getByText('file1.md');
         expect(fileItem).toBeInTheDocument();
-        fireEvent.doubleClick(fileItem);
+        fireEvent.click(fileItem);
       });
 
       // Editor에 파일 내용이 로드되어야 함
       await waitFor(() => {
-        const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...') as HTMLTextAreaElement;
+        const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...');
         expect(editor.value).toBe('# File 1 Content');
       });
     });
@@ -188,7 +188,7 @@ describe('메인 워크플로우 통합 테스트', () => {
     it('should render markdown preview in real-time', async () => {
       render(<MainLayout />);
 
-      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...') as HTMLTextAreaElement;
+      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...');
 
       // 마크다운 입력
       fireEvent.change(editor, { target: { value: '# Hello\n\n**Bold Text**' } });
@@ -207,7 +207,7 @@ describe('메인 워크플로우 통합 테스트', () => {
     it('should display cursor position in status bar', async () => {
       render(<MainLayout />);
 
-      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...') as HTMLTextAreaElement;
+      const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...');
 
       // 텍스트 입력
       fireEvent.change(editor, { target: { value: 'Line 1\nLine 2' } });
@@ -225,4 +225,3 @@ describe('메인 워크플로우 통합 테스트', () => {
     });
   });
 });
-

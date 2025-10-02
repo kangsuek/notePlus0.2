@@ -4,6 +4,9 @@ import {
   isMarkdownFile,
   isTextFile,
   shouldShowPreview,
+  getFileNameWithoutExtension,
+  addExtensionToFileName,
+  changeFileExtension,
 } from './fileUtils';
 
 describe('fileUtils', () => {
@@ -73,6 +76,65 @@ describe('fileUtils', () => {
     it('should return false for other files', () => {
       expect(shouldShowPreview('/path/to/file.js')).toBe(false);
       expect(shouldShowPreview('file')).toBe(false);
+    });
+  });
+
+  describe('getFileNameWithoutExtension', () => {
+    it('should remove extension from filename', () => {
+      expect(getFileNameWithoutExtension('document.md')).toBe('document');
+      expect(getFileNameWithoutExtension('file.txt')).toBe('file');
+      expect(getFileNameWithoutExtension('script.js')).toBe('script');
+    });
+
+    it('should return original name if no extension', () => {
+      expect(getFileNameWithoutExtension('README')).toBe('README');
+      expect(getFileNameWithoutExtension('file')).toBe('file');
+    });
+
+    it('should handle multiple dots correctly', () => {
+      expect(getFileNameWithoutExtension('file.backup.md')).toBe('file.backup');
+      expect(getFileNameWithoutExtension('archive.tar.gz')).toBe('archive.tar');
+    });
+  });
+
+  describe('addExtensionToFileName', () => {
+    it('should add extension to filename without extension', () => {
+      expect(addExtensionToFileName('document', '.md')).toBe('document.md');
+      expect(addExtensionToFileName('file', 'txt')).toBe('file.txt');
+      expect(addExtensionToFileName('script', '.js')).toBe('script.js');
+    });
+
+    it('should not add extension if already has one', () => {
+      expect(addExtensionToFileName('document.md', '.txt')).toBe('document.md');
+      expect(addExtensionToFileName('file.txt', '.js')).toBe('file.txt');
+    });
+
+    it('should handle extension with or without dot', () => {
+      expect(addExtensionToFileName('file', 'md')).toBe('file.md');
+      expect(addExtensionToFileName('file', '.md')).toBe('file.md');
+    });
+  });
+
+  describe('changeFileExtension', () => {
+    it('should change file extension', () => {
+      expect(changeFileExtension('document.md', '.txt')).toBe('document.txt');
+      expect(changeFileExtension('file.txt', '.js')).toBe('file.js');
+      expect(changeFileExtension('script.js', 'ts')).toBe('script.ts');
+    });
+
+    it('should handle extension with or without dot', () => {
+      expect(changeFileExtension('document.md', 'txt')).toBe('document.txt');
+      expect(changeFileExtension('file.txt', '.js')).toBe('file.js');
+    });
+
+    it('should handle files without extension', () => {
+      expect(changeFileExtension('README', '.md')).toBe('README.md');
+      expect(changeFileExtension('file', 'txt')).toBe('file.txt');
+    });
+
+    it('should handle multiple dots correctly', () => {
+      expect(changeFileExtension('file.backup.md', '.txt')).toBe('file.backup.txt');
+      expect(changeFileExtension('archive.tar.gz', '.zip')).toBe('archive.tar.zip');
     });
   });
 });
