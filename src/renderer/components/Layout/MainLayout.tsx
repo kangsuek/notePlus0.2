@@ -8,6 +8,7 @@ import { UI_CONFIG, FILE_CONFIG, EDITOR_CONFIG } from '@renderer/constants';
 import type { CursorPosition } from '@renderer/types';
 import { rafThrottle } from '@renderer/utils/throttle';
 import { saveFile, saveFileAs, openFile, readFile } from '@renderer/utils/fileOperations';
+import { shouldShowPreview } from '@renderer/utils/fileUtils';
 import './MainLayout.css';
 
 const MainLayout: React.FC = () => {
@@ -17,6 +18,7 @@ const MainLayout: React.FC = () => {
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
   const [showStatus, setShowStatus] = useState(false);
   const [markdownText, setMarkdownText] = useState(''); // 마크다운 텍스트 상태
+  const [showPreview, setShowPreview] = useState(true); // 프리뷰 표시 여부
   const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 스크롤 동기화를 위한 ref
@@ -180,6 +182,9 @@ const MainLayout: React.FC = () => {
       const fileName = result.filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
       setCurrentFileName(fileName);
       setIsDirty(false);
+      
+      // 파일 확장자에 따라 프리뷰 표시 여부 결정
+      setShowPreview(shouldShowPreview(result.filePath));
     }
   }, []);
 
@@ -192,6 +197,9 @@ const MainLayout: React.FC = () => {
       const fileName = filePath.split('/').pop() || FILE_CONFIG.DEFAULT_FILENAME;
       setCurrentFileName(fileName);
       setIsDirty(false);
+      
+      // 파일 확장자에 따라 프리뷰 표시 여부 결정
+      setShowPreview(shouldShowPreview(filePath));
     } else {
       console.error('Failed to open file:', result.error);
     }
@@ -208,6 +216,9 @@ const MainLayout: React.FC = () => {
     setCurrentFilePath(null);
     setCurrentFileName(FILE_CONFIG.DEFAULT_FILENAME);
     setIsDirty(false);
+    
+    // 새 파일은 기본적으로 프리뷰 표시 (untitled.md)
+    setShowPreview(true);
   }, [isDirty]);
 
   // 다른 이름으로 저장 (Cmd+Shift+S)
@@ -219,6 +230,9 @@ const MainLayout: React.FC = () => {
       setCurrentFileName(fileName);
       setIsDirty(false);
       showStatusTemporarily();
+      
+      // 저장된 파일 확장자에 따라 프리뷰 표시 여부 결정
+      setShowPreview(shouldShowPreview(result.filePath));
     }
   }, [markdownText, showStatusTemporarily]);
 
@@ -318,7 +332,7 @@ const MainLayout: React.FC = () => {
   return (
     <div className="main-layout" data-testid="main-layout">
       <TitleBar />
-      <div className="main-content">
+      <div className={`main-content ${!showPreview ? 'preview-hidden' : ''}`}>
         <Sidebar
           currentFileName={currentFileName}
           onFileNameChange={handleFileNameChange}
@@ -335,7 +349,9 @@ const MainLayout: React.FC = () => {
             editorTextareaRef.current = ref;
           }}
         />
-        <Preview markdown={markdownText} ref={previewRef} onScroll={handlePreviewScroll} />
+        {showPreview && (
+          <Preview markdown={markdownText} ref={previewRef} onScroll={handlePreviewScroll} />
+        )}
       </div>
       <StatusBar cursorPosition={cursorPosition} isDirty={isDirty} showStatus={showStatus} />
     </div>
