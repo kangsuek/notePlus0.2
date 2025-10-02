@@ -82,11 +82,19 @@ export interface MarkdownPreviewProps {
 }
 
 /**
+ * 자동 줄바꿈 정보
+ */
+export interface LineWrapInfo {
+  logicalLineNumber: number; // 논리적 줄 번호 (1부터 시작)
+  isWrapped: boolean; // 자동 줄바꿈된 줄인지 여부
+}
+
+/**
  * LineNumbers Props
  */
 export interface LineNumbersProps {
-  lineCount: number;
-  currentLine?: number;
+  lineWraps: LineWrapInfo[]; // 시각적 줄 정보
+  currentLine: number; // 현재 커서가 있는 논리적 줄 번호
 }
 
 /**

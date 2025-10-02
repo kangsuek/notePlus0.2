@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import LineNumbers from './LineNumbers';
 import { EDITOR_CONFIG, MARKDOWN_SYNTAX } from '@renderer/constants';
 import type { EditorProps } from '@renderer/types';
+import { calculateLineWraps } from '@renderer/utils/lineWrapCalculator';
 import './Editor.css';
 
 const Editor: React.FC<EditorProps> = ({
@@ -12,12 +13,15 @@ const Editor: React.FC<EditorProps> = ({
 }) => {
   const [text, setText] = useState(controlledValue || '');
   const [currentLine, setCurrentLine] = useState(1);
+  const [viewportWidth, setViewportWidth] = useState(0); // 뷰포트 너비 추적
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
 
-  // 라인 수 계산 (useMemo로 메모이제이션)
-  const lineCount = useMemo(() => text.split('\n').length, [text]);
+  // 자동 줄바꿈 정보 계산 (useMemo로 메모이제이션)
+  const lineWraps = useMemo(() => {
+    return calculateLineWraps(text, textareaRef.current);
+  }, [text, viewportWidth]);
 
   // 커서 위치 계산
   const updateCursorPosition = useCallback(() => {
@@ -210,6 +214,28 @@ const Editor: React.FC<EditorProps> = ({
     }
   }, [controlledValue]);
 
+  // 윈도우 크기 변경 감지 (자동 줄바꿈 재계산)
+  useEffect(() => {
+    const handleResize = () => {
+      if (textareaRef.current) {
+        setViewportWidth(textareaRef.current.clientWidth);
+      }
+    };
+
+    // 초기 너비 설정
+    handleResize();
+
+    // ResizeObserver로 textarea 크기 변경 감지
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (textareaRef.current) {
+      resizeObserver.observe(textareaRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   return (
     <div className="editor-section" data-testid="editor-section">
       <div className="editor-header">
@@ -217,7 +243,7 @@ const Editor: React.FC<EditorProps> = ({
       </div>
       <div className="editor-container">
         <div ref={lineNumbersRef} className="line-numbers-wrapper">
-          <LineNumbers lineCount={lineCount} currentLine={currentLine} />
+          <LineNumbers lineWraps={lineWraps} currentLine={currentLine} />
         </div>
         <textarea
           ref={textareaRef}

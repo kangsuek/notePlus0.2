@@ -1,14 +1,25 @@
 import { render, screen } from '@/__tests__/test-utils';
 import LineNumbers from './LineNumbers';
+import type { LineWrapInfo } from '@renderer/types';
 
 describe('LineNumbers', () => {
   it('should render without crashing', () => {
-    render(<LineNumbers lineCount={1} />);
+    const lineWraps: LineWrapInfo[] = [
+      { logicalLineNumber: 1, isWrapped: false },
+    ];
+    render(<LineNumbers lineWraps={lineWraps} currentLine={1} />);
     expect(screen.getByTestId('line-numbers')).toBeInTheDocument();
   });
 
   it('should render correct number of lines', () => {
-    render(<LineNumbers lineCount={5} />);
+    const lineWraps: LineWrapInfo[] = [
+      { logicalLineNumber: 1, isWrapped: false },
+      { logicalLineNumber: 2, isWrapped: false },
+      { logicalLineNumber: 3, isWrapped: false },
+      { logicalLineNumber: 4, isWrapped: false },
+      { logicalLineNumber: 5, isWrapped: false },
+    ];
+    render(<LineNumbers lineWraps={lineWraps} currentLine={1} />);
 
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
@@ -17,39 +28,82 @@ describe('LineNumbers', () => {
     expect(screen.getByText('5')).toBeInTheDocument();
   });
 
-  it('should render at least 1 line when lineCount is 0', () => {
-    render(<LineNumbers lineCount={0} />);
-    expect(screen.getByText('1')).toBeInTheDocument();
-  });
-
   it('should highlight current line', () => {
-    render(<LineNumbers lineCount={5} currentLine={3} />);
+    const lineWraps: LineWrapInfo[] = [
+      { logicalLineNumber: 1, isWrapped: false },
+      { logicalLineNumber: 2, isWrapped: false },
+      { logicalLineNumber: 3, isWrapped: false },
+      { logicalLineNumber: 4, isWrapped: false },
+      { logicalLineNumber: 5, isWrapped: false },
+    ];
+    render(<LineNumbers lineWraps={lineWraps} currentLine={3} />);
 
     const line3 = screen.getByTestId('line-number-3');
     expect(line3).toHaveClass('line-number-active');
   });
 
-  it('should not highlight any line when currentLine is not provided', () => {
-    render(<LineNumbers lineCount={5} />);
+  it('should render empty line numbers for wrapped lines', () => {
+    const lineWraps: LineWrapInfo[] = [
+      { logicalLineNumber: 1, isWrapped: false },
+      { logicalLineNumber: 2, isWrapped: false },
+      { logicalLineNumber: 2, isWrapped: true }, // 자동 줄바꿈된 줄
+      { logicalLineNumber: 2, isWrapped: true }, // 자동 줄바꿈된 줄
+      { logicalLineNumber: 3, isWrapped: false },
+    ];
+    render(<LineNumbers lineWraps={lineWraps} currentLine={1} />);
 
-    const line1 = screen.getByTestId('line-number-1');
-    const line2 = screen.getByTestId('line-number-2');
+    // 논리적 줄번호만 표시되어야 함
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
 
-    expect(line1).not.toHaveClass('line-number-active');
-    expect(line2).not.toHaveClass('line-number-active');
+    // 자동 줄바꿈된 줄은 빈칸이어야 함
+    const wrappedLines = screen.getAllByTestId(/line-number-wrapped/);
+    expect(wrappedLines).toHaveLength(2);
+    wrappedLines.forEach((line) => {
+      expect(line.textContent).toBe('');
+    });
   });
 
-  it('should update line numbers when lineCount changes', () => {
-    const { rerender } = render(<LineNumbers lineCount={3} />);
+  it('should only highlight the first visual line of current logical line', () => {
+    const lineWraps: LineWrapInfo[] = [
+      { logicalLineNumber: 1, isWrapped: false },
+      { logicalLineNumber: 2, isWrapped: false },
+      { logicalLineNumber: 2, isWrapped: true }, // 자동 줄바꿈
+      { logicalLineNumber: 3, isWrapped: false },
+    ];
+    render(<LineNumbers lineWraps={lineWraps} currentLine={2} />);
+
+    // 논리적 줄 2의 첫 번째 시각적 줄만 하이라이트
+    const line2 = screen.getByTestId('line-number-2');
+    expect(line2).toHaveClass('line-number-active');
+
+    // 자동 줄바꿈된 줄은 하이라이트 안 됨
+    const wrappedLine = screen.getByTestId('line-number-wrapped-2');
+    expect(wrappedLine).not.toHaveClass('line-number-active');
+  });
+
+  it('should update when lineWraps changes', () => {
+    const initialLineWraps: LineWrapInfo[] = [
+      { logicalLineNumber: 1, isWrapped: false },
+      { logicalLineNumber: 2, isWrapped: false },
+    ];
+    const { rerender } = render(<LineNumbers lineWraps={initialLineWraps} currentLine={1} />);
 
     expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(screen.queryByText('3')).not.toBeInTheDocument();
+
+    // lineWraps 변경
+    const newLineWraps: LineWrapInfo[] = [
+      { logicalLineNumber: 1, isWrapped: false },
+      { logicalLineNumber: 2, isWrapped: false },
+      { logicalLineNumber: 2, isWrapped: true },
+      { logicalLineNumber: 3, isWrapped: false },
+    ];
+    rerender(<LineNumbers lineWraps={newLineWraps} currentLine={1} />);
+
     expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.queryByText('5')).not.toBeInTheDocument();
-
-    // lineCount 변경
-    rerender(<LineNumbers lineCount={5} />);
-
-    expect(screen.getByText('5')).toBeInTheDocument();
   });
 });
 
