@@ -23,6 +23,14 @@ const Editor: React.FC<EditorProps> = ({
 
   // 자동 줄바꿈 정보 계산 (useMemo로 메모이제이션)
   const lineWraps = useMemo(() => {
+    // textarea가 없으면 기본값 반환
+    if (!textareaRef.current) {
+      const lines = text.split('\n');
+      return lines.map((_, index) => ({
+        logicalLineNumber: index + 1,
+        isWrapped: false,
+      }));
+    }
     return calculateLineWraps(text, textareaRef.current);
   }, [text, viewportWidth]);
 
@@ -209,10 +217,9 @@ const Editor: React.FC<EditorProps> = ({
           const nextNewlinePos = text.indexOf('\n', end);
           const currentLineEnd = nextNewlinePos === -1 ? text.length : nextNewlinePos;
           const currentLineText = text.substring(currentLineStart, currentLineEnd);
-          
+
           const comment = `<!-- ${currentLineText} -->`;
-          newValue =
-            text.substring(0, currentLineStart) + comment + text.substring(currentLineEnd);
+          newValue = text.substring(0, currentLineStart) + comment + text.substring(currentLineEnd);
           newCursorPos = currentLineStart + comment.length;
         }
       } else {
@@ -322,7 +329,12 @@ const Editor: React.FC<EditorProps> = ({
   useEffect(() => {
     const handleResize = () => {
       if (textareaRef.current) {
-        setViewportWidth(textareaRef.current.clientWidth);
+        // requestAnimationFrame을 사용하여 DOM 업데이트 후 실행
+        requestAnimationFrame(() => {
+          if (textareaRef.current) {
+            setViewportWidth(textareaRef.current.clientWidth);
+          }
+        });
       }
     };
 

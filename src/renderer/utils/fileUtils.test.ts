@@ -2,6 +2,7 @@ import {
   getFileExtension,
   getFileExtensionFromName,
   isMarkdownFile,
+  isHtmlFile,
   isTextFile,
   shouldShowPreview,
   getFileNameWithoutExtension,
@@ -49,6 +50,22 @@ describe('fileUtils', () => {
     });
   });
 
+  describe('isHtmlFile', () => {
+    it('should return true for HTML files', () => {
+      expect(isHtmlFile('/path/to/file.html')).toBe(true);
+      expect(isHtmlFile('/path/to/file.htm')).toBe(true);
+      expect(isHtmlFile('file.html')).toBe(true);
+      expect(isHtmlFile('file.HTML')).toBe(true); // 대소문자 무관
+    });
+
+    it('should return false for non-HTML files', () => {
+      expect(isHtmlFile('/path/to/file.md')).toBe(false);
+      expect(isHtmlFile('/path/to/file.txt')).toBe(false);
+      expect(isHtmlFile('/path/to/file.js')).toBe(false);
+      expect(isHtmlFile('file')).toBe(false);
+    });
+  });
+
   describe('isTextFile', () => {
     it('should return true for text files', () => {
       expect(isTextFile('/path/to/file.txt')).toBe(true);
@@ -67,6 +84,11 @@ describe('fileUtils', () => {
     it('should return true for markdown files', () => {
       expect(shouldShowPreview('/path/to/file.md')).toBe(true);
       expect(shouldShowPreview('/path/to/file.markdown')).toBe(true);
+    });
+
+    it('should return true for HTML files', () => {
+      expect(shouldShowPreview('/path/to/file.html')).toBe(true);
+      expect(shouldShowPreview('/path/to/file.htm')).toBe(true);
     });
 
     it('should return false for text files', () => {

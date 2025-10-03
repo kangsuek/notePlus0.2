@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import TitleBar from '../TitleBar/TitleBar';
 import Sidebar from '../Sidebar/Sidebar';
@@ -19,7 +19,7 @@ const MainLayout: React.FC = () => {
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
   const [showStatus, setShowStatus] = useState(false);
   const [markdownText, setMarkdownText] = useState(''); // 마크다운 텍스트 상태
-  const [showPreview, setShowPreview] = useState(true); // 프리뷰 표시 여부
+  const [userTogglePreview, setUserTogglePreview] = useState<boolean | null>(null); // 사용자 토글 상태
   const statusTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 스크롤 동기화를 위한 ref
@@ -177,7 +177,7 @@ const MainLayout: React.FC = () => {
           showStatusTemporarily();
 
           // 프리뷰 표시 여부 업데이트
-          setShowPreview(shouldShowPreview(newFilePath));
+          setUserTogglePreview(null);
 
           // 최근 파일 목록 새로고침
           refreshRecentFiles();
@@ -208,7 +208,7 @@ const MainLayout: React.FC = () => {
         showStatusTemporarily();
 
         // 프리뷰 표시 여부 업데이트
-        setShowPreview(shouldShowPreview(result.filePath));
+        setUserTogglePreview(null);
 
         // 최근 파일 목록 새로고침
         refreshRecentFiles();
@@ -226,8 +226,8 @@ const MainLayout: React.FC = () => {
       setCurrentFileName(fileName);
       setIsDirty(false);
 
-      // 파일 확장자에 따라 프리뷰 표시 여부 결정
-      setShowPreview(shouldShowPreview(result.filePath));
+      // 파일을 열 때 사용자 토글 상태 리셋 (파일 타입에 따라 자동 결정)
+      setUserTogglePreview(null);
 
       // 스크롤을 맨 위로 이동
       setTimeout(() => {
@@ -255,8 +255,8 @@ const MainLayout: React.FC = () => {
         setCurrentFileName(fileName);
         setIsDirty(false);
 
-        // 파일 확장자에 따라 프리뷰 표시 여부 결정
-        setShowPreview(shouldShowPreview(filePath));
+        // 파일을 열 때 사용자 토글 상태 리셋 (파일 타입에 따라 자동 결정)
+        setUserTogglePreview(null);
 
         // 스크롤을 맨 위로 이동
         setTimeout(() => {
@@ -289,8 +289,8 @@ const MainLayout: React.FC = () => {
     setCurrentFileName(FILE_CONFIG.DEFAULT_FILENAME);
     setIsDirty(false);
 
-    // 새 파일은 기본적으로 프리뷰 표시 (untitled.md)
-    setShowPreview(true);
+    // 새 파일을 만들 때 사용자 토글 상태 리셋 (기본 파일명은 .md이므로 프리뷰 표시)
+    setUserTogglePreview(null);
   }, [isDirty]);
 
   // 다른 이름으로 저장 (Cmd+Shift+S)
@@ -303,8 +303,8 @@ const MainLayout: React.FC = () => {
       setIsDirty(false);
       showStatusTemporarily();
 
-      // 저장된 파일 확장자에 따라 프리뷰 표시 여부 결정
-      setShowPreview(shouldShowPreview(result.filePath));
+      // 저장된 파일에 따라 사용자 토글 상태 리셋 (파일 타입에 따라 자동 결정)
+      setUserTogglePreview(null);
     }
   }, [markdownText, showStatusTemporarily]);
 
@@ -401,9 +401,40 @@ const MainLayout: React.FC = () => {
     };
   }, []);
 
+  // 파일 타입에 따른 프리뷰 표시 여부 계산
+  const shouldShowPreviewByFileType = useMemo(() => {
+    if (currentFilePath) {
+      return shouldShowPreview(currentFilePath);
+    }
+    return shouldShowPreview(currentFileName);
+  }, [currentFilePath, currentFileName]);
+
+  // 최종 프리뷰 표시 여부 (파일 타입 + 사용자 토글)
+  const finalShowPreview = useMemo(() => {
+    if (userTogglePreview !== null) {
+      // 사용자가 수동으로 토글한 경우
+      return userTogglePreview;
+    }
+    // 파일 타입에 따라 자동 결정
+    return shouldShowPreviewByFileType;
+  }, [userTogglePreview, shouldShowPreviewByFileType]);
+
+  // 프리뷰 토글 핸들러
+  const handlePreviewToggle = useCallback(() => {
+    setUserTogglePreview((prev) => {
+      if (prev === null) {
+        // 처음 토글: 현재 상태의 반대로 설정
+        return !finalShowPreview;
+      } else {
+        // 이미 토글된 상태: 반대로 설정
+        return !prev;
+      }
+    });
+  }, [finalShowPreview]);
+
   return (
     <div className="main-layout" data-testid="main-layout">
-      <TitleBar />
+      <TitleBar onPreviewToggle={handlePreviewToggle} isPreviewVisible={finalShowPreview} />
       <div className="main-content">
         <Sidebar
           ref={sidebarRef}
@@ -425,7 +456,7 @@ const MainLayout: React.FC = () => {
               }}
             />
           </Panel>
-          {showPreview && (
+          {finalShowPreview && (
             <>
               <PanelResizeHandle className="resize-handle" />
               <Panel defaultSize={50} minSize={20} className="preview-panel">

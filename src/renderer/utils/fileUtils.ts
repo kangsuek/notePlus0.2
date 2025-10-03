@@ -45,12 +45,22 @@ export function isTextFile(filePath: string): boolean {
 }
 
 /**
+ * HTML 파일인지 확인
+ * @param filePath 파일 경로 또는 파일명
+ * @returns HTML 파일 여부
+ */
+export function isHtmlFile(filePath: string): boolean {
+  const extension = getFileExtension(filePath);
+  return extension === '.html' || extension === '.htm';
+}
+
+/**
  * 프리뷰를 표시해야 하는 파일인지 확인
  * @param filePath 파일 경로 또는 파일명
  * @returns 프리뷰 표시 여부
  */
 export function shouldShowPreview(filePath: string): boolean {
-  return isMarkdownFile(filePath);
+  return isMarkdownFile(filePath) || isHtmlFile(filePath);
 }
 
 /**
