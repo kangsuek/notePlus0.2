@@ -87,7 +87,7 @@ export function addExtensionToFileName(fileName: string, extension: string): str
   if (fileName.includes('.')) {
     return fileName; // 이미 확장자가 있으면 그대로 반환
   }
-  
+
   // 확장자가 점으로 시작하지 않으면 점 추가
   const normalizedExtension = extension.startsWith('.') ? extension : `.${extension}`;
   return `${fileName}${normalizedExtension}`;
