@@ -3,7 +3,9 @@
   background-color: var(--background-primary);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
+  height: 100%;
+  min-height: 0; /* flex item이 축소될 수 있도록 함 */
 }
 
 .preview-header {
@@ -30,6 +32,28 @@
   margin: 0 auto;
   overflow-y: auto;
   width: 100%;
+  min-height: 0; /* flex item이 축소될 수 있도록 함 */
+  /* macOS 스타일 스크롤바 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-secondary) transparent;
+}
+
+.preview-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.preview-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.preview-content::-webkit-scrollbar-thumb {
+  background-color: var(--text-secondary);
+  border-radius: 4px;
+  opacity: 0.5;
+}
+
+.preview-content::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
 }
 
 .preview-content h1,
@@ -83,4 +107,3 @@
   background-color: transparent;
   padding: 0;
 }
-

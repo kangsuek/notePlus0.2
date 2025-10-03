@@ -75,15 +75,15 @@ describe('메인 워크플로우 통합 테스트', () => {
       fireEvent.change(editor, { target: { value: '2 + 3' } });
 
       // 커서를 끝으로 이동
-      editor.selectionStart = editor.value.length;
-      editor.selectionEnd = editor.value.length;
+      (editor as HTMLTextAreaElement).selectionStart = (editor as HTMLTextAreaElement).value.length;
+      (editor as HTMLTextAreaElement).selectionEnd = (editor as HTMLTextAreaElement).value.length;
 
       // = 키 입력
       fireEvent.keyDown(editor, { key: '=' });
 
       // 계산 결과 확인
       await waitFor(() => {
-        expect(editor.value).toContain('2 + 3 = 5');
+        expect((editor as HTMLTextAreaElement).value).toContain('2 + 3 = 5');
       });
     });
 
@@ -96,15 +96,15 @@ describe('메인 워크플로우 통합 테스트', () => {
       fireEvent.change(editor, { target: { value: '2 + +' } });
 
       // 커서를 끝으로 이동
-      editor.selectionStart = editor.value.length;
-      editor.selectionEnd = editor.value.length;
+      (editor as HTMLTextAreaElement).selectionStart = (editor as HTMLTextAreaElement).value.length;
+      (editor as HTMLTextAreaElement).selectionEnd = (editor as HTMLTextAreaElement).value.length;
 
       // = 키 입력
       fireEvent.keyDown(editor, { key: '=' });
 
       // handleEquals가 return하므로 preventDefault가 호출되지 않음
       // 하지만 fireEvent는 기본 동작을 실행하지 않으므로 값은 그대로
-      expect(editor.value).toBe('2 + +');
+      expect((editor as HTMLTextAreaElement).value).toBe('2 + +');
     });
 
     it('should not calculate plain numbers', () => {
@@ -116,15 +116,15 @@ describe('메인 워크플로우 통합 테스트', () => {
       fireEvent.change(editor, { target: { value: '123' } });
 
       // 커서를 끝으로 이동
-      editor.selectionStart = editor.value.length;
-      editor.selectionEnd = editor.value.length;
+      (editor as HTMLTextAreaElement).selectionStart = (editor as HTMLTextAreaElement).value.length;
+      (editor as HTMLTextAreaElement).selectionEnd = (editor as HTMLTextAreaElement).value.length;
 
       // = 키 입력
       fireEvent.keyDown(editor, { key: '=' });
 
       // handleEquals가 return하므로 preventDefault가 호출되지 않음
       // 하지만 fireEvent는 기본 동작을 실행하지 않으므로 값은 그대로
-      expect(editor.value).toBe('123');
+      expect((editor as HTMLTextAreaElement).value).toBe('123');
     });
   });
 
@@ -179,7 +179,7 @@ describe('메인 워크플로우 통합 테스트', () => {
       // Editor에 파일 내용이 로드되어야 함
       await waitFor(() => {
         const editor = screen.getByPlaceholderText('마크다운으로 작성하세요...');
-        expect(editor.value).toBe('# File 1 Content');
+        expect((editor as HTMLTextAreaElement).value).toBe('# File 1 Content');
       });
     });
   });
@@ -213,8 +213,8 @@ describe('메인 워크플로우 통합 테스트', () => {
       fireEvent.change(editor, { target: { value: 'Line 1\nLine 2' } });
 
       // 커서를 두 번째 줄로 이동 (Line 2의 시작 = 인덱스 7)
-      editor.selectionStart = 7;
-      editor.selectionEnd = 7;
+      (editor as HTMLTextAreaElement).selectionStart = 7;
+      (editor as HTMLTextAreaElement).selectionEnd = 7;
       fireEvent.click(editor);
 
       // StatusBar에서 커서 위치 확인 (줄 2, 칸 1)

@@ -28,6 +28,7 @@
     "mathjs": "^12.4.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-resizable-panels": "^3.0.6",
     "styled-components": "^6.1.1"
   },
   "devDependencies": {

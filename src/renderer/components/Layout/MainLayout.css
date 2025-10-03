@@ -14,24 +14,47 @@
   overflow: hidden;
 }
 
-/* 3단 레이아웃: Sidebar | Editor | Preview */
-.main-content > * {
+/* Resizable Panel Group */
+.editor-preview-group {
+  flex: 1;
+  display: flex;
+  overflow: visible;
+}
+
+.editor-panel,
+.preview-panel {
   height: 100%;
-  overflow: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* flex item이 축소될 수 있도록 함 */
 }
 
-/* Preview가 숨겨진 경우 Editor가 전체 너비 차지 */
-.main-content:has(.preview-section:not([style*='display: none'])) {
-  /* Preview가 표시된 경우: 기본 3단 레이아웃 */
+/* Resize Handle */
+.resize-handle {
+  width: 4px;
+  background-color: var(--border-color);
+  cursor: col-resize;
+  position: relative;
+  transition: background-color 0.2s ease;
 }
 
-.main-content:not(:has(.preview-section)) {
-  /* Preview가 숨겨진 경우: Editor가 남은 공간 모두 차지 */
+.resize-handle:hover {
+  background-color: var(--accent-color, #0066cc);
 }
 
-/* 더 안전한 방법: JavaScript로 클래스 추가 */
-.main-content.preview-hidden .editor-section {
-  flex: 1; /* Editor가 남은 공간 모두 차지 */
+.resize-handle:active {
+  background-color: var(--accent-color, #0066cc);
+}
+
+/* Resize Handle 드래그 영역 확장 */
+.resize-handle::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 0;
+  bottom: 0;
 }
 
 /* macOS 스타일 향상 */

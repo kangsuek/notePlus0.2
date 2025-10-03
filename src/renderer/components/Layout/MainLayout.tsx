@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import TitleBar from '../TitleBar/TitleBar';
 import Sidebar from '../Sidebar/Sidebar';
 import Editor from '../Editor/Editor';
@@ -403,7 +404,7 @@ const MainLayout: React.FC = () => {
   return (
     <div className="main-layout" data-testid="main-layout">
       <TitleBar />
-      <div className={`main-content ${!showPreview ? 'preview-hidden' : ''}`}>
+      <div className="main-content">
         <Sidebar
           ref={sidebarRef}
           currentFileName={currentFileName}
@@ -411,19 +412,28 @@ const MainLayout: React.FC = () => {
           isDirty={isDirty}
           onFileOpen={handleFileOpen}
         />
-        <Editor
-          value={markdownText}
-          onCursorChange={handleCursorChange}
-          onChange={handleTextChange}
-          debounceMs={EDITOR_CONFIG.DEBOUNCE_MS}
-          onScroll={handleEditorScroll}
-          onTextareaRef={(ref) => {
-            editorTextareaRef.current = ref;
-          }}
-        />
-        {showPreview && (
-          <Preview markdown={markdownText} ref={previewRef} onScroll={handlePreviewScroll} />
-        )}
+        <PanelGroup direction="horizontal" className="editor-preview-group">
+          <Panel defaultSize={50} minSize={20} className="editor-panel">
+            <Editor
+              value={markdownText}
+              onCursorChange={handleCursorChange}
+              onChange={handleTextChange}
+              debounceMs={EDITOR_CONFIG.DEBOUNCE_MS}
+              onScroll={handleEditorScroll}
+              onTextareaRef={(ref) => {
+                editorTextareaRef.current = ref;
+              }}
+            />
+          </Panel>
+          {showPreview && (
+            <>
+              <PanelResizeHandle className="resize-handle" />
+              <Panel defaultSize={50} minSize={20} className="preview-panel">
+                <Preview markdown={markdownText} ref={previewRef} onScroll={handlePreviewScroll} />
+              </Panel>
+            </>
+          )}
+        </PanelGroup>
       </div>
       <StatusBar cursorPosition={cursorPosition} isDirty={isDirty} showStatus={showStatus} />
     </div>
